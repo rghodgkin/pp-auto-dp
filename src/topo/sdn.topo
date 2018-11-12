@@ -1,0 +1,19 @@
+sdn:
+  name: AUTO
+  network:
+    count: 1
+    edge_list:
+      - type: netrouter
+        count: 1     
+        engine: e1
+      - type: cloud
+        cloud_provider: aws
+        count: 1
+        engine: e1
+      - type: cloud
+        cloud_provider: aws
+        count: 1
+        engine: e2 
+      - type: site
+        count: 1
+        engine: e2 

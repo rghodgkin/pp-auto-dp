@@ -1,0 +1,4 @@
+logging==0.4.9.6
+pytest==2.9.2
+jinja2==2.9.6
+python-openstackclient==3.17.0
