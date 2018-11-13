@@ -2,19 +2,22 @@ import os
 
 class TopoTemps(object):
     sdn = {'name':'', 'network_list':[]}
-    network = {'name':'', 'tenant_net':'', 'tenant_cidr':'', 'edge_list':[]}
+    network = {'name':'', 'tenant_net_name':'', 'tenant_cidr':'', 'edge_list':[], \
+            'os_data':{}}
+    netrouter = {'name':'', 'engine':'', 'tenant_ip':'', 'os_data':{}}
     #network = {'name':'', 'sdn_description':'', 'sdn_account': '', \
     #           'sdn_network_type': '', 'sdn_zone': '', 'edge_list':[]}
     cloud = {'name':'', 'cloud_provider':'', 'engine':'', 'physical_net':'', \
-            'segment_id':'', 'tenant_ip':'', 'provider_net':'', 'provider_ip':''}
+            'segment_id':'', 'tenant_ip':'', 'provider_net':'', 'provider_ip':'', \
+            'os_data':{}}
     #cloud = {'name':'', 'sdn_description':'', 'sdn_network':'', \
     #         'sdn_cloud_provider':'', 'aws_cloud_region':'', \
     #         'sdn_cloud_location':'', 'aws_cloud_account':'', \
     #         'IPv4_CIDR_block':'', 'type':'cloud'} 
-    site = {'name':'', 'engine':'', 'vpn_net':''}
+    site = {'name':'', 'engine':'', 'vpn_net':'', 'os_data':{}}
     #site = {'name':'', 'sdn_description':'', \
     #        'sdn_network':'', 'sdn_zone':'', 'type':'site'}
-    mobile = {'name':'', 'engine','', 'mobile_net':''}
+    mobile = {'name':'', 'engine':'', 'mobile_net':'', 'os_data':{}}
     #mobile = {'name':'', 'sdn_description':'', \
     #        'sdn_network':'', 'sdn_zone':'', 'type':'mobile'}
 
@@ -25,9 +28,15 @@ class SDNVLAN(object):
     GOOGLE_VLAN_MAX = 249
 
 class SDNCIDR(object):
-    OS_TENANT_CIDR_START = 10.1.0.0/24
-    AWS_PROVIDER_CIDR_START = 168.0.0.0/24
-    GOOGLE_PROVIDER_CIDR_START = 169.0.0.0/24
+    OS_TENANT_IP_START = '10.1.0.0/16'
+    OS_TENANT_PREFIX = 24
+    AWS_PROVIDER_IP_START = '168.0.0.0/16'
+    AWS_PROVIDER_PREFIX = 24
+    GOOGLE_PROVIDER_IP_START = '169.0.0.0/16'
+    GOOGLE_PROVIDER_PREFIX = 24
+
+class OSBRIDGEMAPPING(object):
+    OS_PHYSICAL_NET = 'vlan'
            
 class SDNNetTrans(object):
     aws = {'us-east-1':'Ashburn, VA', \

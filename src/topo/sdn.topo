@@ -5,15 +5,15 @@ sdn:
     edge_list:
       - type: netrouter
         count: 1     
-        engine: e1
+        engine:
+        - e1
       - type: cloud
         cloud_provider: aws
         count: 1
-        engine: e1
-      - type: cloud
-        cloud_provider: aws
-        count: 1
-        engine: e2 
+        engine:
+        - e1
+        - e2
       - type: site
         count: 1
-        engine: e2 
+        engine:
+        - e2 
