@@ -15,7 +15,7 @@ def gen_sdn_topo(tv, common):
   
     try:
       aws_vlan = SDNVLAN.AWS_VLAN_START
-      goog_vlan = SDNVLAN.GOOGLE_VLAN_START
+      google_vlan = SDNVLAN.GOOGLE_VLAN_START
       tenant_ip_start = SDNCIDR.OS_TENANT_IP_START
       tenant_prefix = SDNCIDR.OS_TENANT_PREFIX
       aws_ip_start = SDNCIDR.AWS_PROVIDER_IP_START
@@ -39,7 +39,7 @@ def gen_sdn_topo(tv, common):
       net_cntr = 1
       for net_item in range(0,net_count):
 
-          net_kl = TopoTemps.network
+          net_kl = TopoTemps.network.copy()
           net_kl['name'] = "%s-%s" % (sdn_name, net_cntr)
           net_kl['tenant_net_name'] = "%s-network-%s" % (sdn_name, net_cntr) 
           net_kl['tenant_cidr'] = str(tenant_sub_list.pop())
@@ -48,6 +48,7 @@ def gen_sdn_topo(tv, common):
           edge_list = tv['sdn']['network']['edge_list']
           edge_cntr = 1
           for edge_item in edge_list:
+
             if edge_item['type'] == "netrouter":
               edge_count = edge_item['count']
               edge_engine = edge_item['engine']
@@ -96,8 +97,8 @@ def gen_sdn_topo(tv, common):
               edge_inst_cntr = 1
               for e_item in edge_item['engine']:
                 for n_item in range(0,edge_count):
-                  edge_kl = TopoTemps.netrouter.copy()
-                  edge_kl['name'] = "%s-netrtr-%s-%s" % (sdn_name, net_cntr, edge_inst_cntr)
+                  edge_kl = TopoTemps.site.copy()
+                  edge_kl['name'] = "%s-site-%s-%s" % (sdn_name, net_cntr, edge_inst_cntr)
                   edge_kl['engine'] = e_item
                   edge_kl['vpn_net'] = ""
 
@@ -113,7 +114,7 @@ def gen_sdn_topo(tv, common):
           # Add net_kl to sdn['network']
           sdn['network'].append(net_kl)
           net_cntr += 1
-       
+
       return 1, sdn 
 
     except:

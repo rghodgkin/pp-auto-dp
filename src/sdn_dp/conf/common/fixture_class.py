@@ -21,10 +21,9 @@ class COMMON(object):
         self.os = {} 
         self.gen_config_dict()
         self.gen_topo_dict()
-        pdb.set_trace()
         self.gen_sdn_data() 
         pdb.set_trace()
-        self.gen_os_data() 
+        self.gen_os_infra() 
 
     def gen_topo_dict(self):
         '''
@@ -72,9 +71,36 @@ class COMMON(object):
         else:
             pytest.exit(msg="Error: gen_sdn_data generation failed - exiting")
  
-    def gen_os_data(self):
+    def gen_os_infra(self):
         '''
-        This method will generate OpenStack data needed to access controller rest api
+        This method will create all OpenStack tokens and references needed
+          under self.os
         '''
+
+        output = os_utils.return_keystone_sess(self.config['sdn']['os'])
+        if output[0]:
+            self.os['sess'] = output[1]
+        else:
+            pytest.exit(msg="Error: Failed to get OpenStack session key")
+ 
+        output = os_utils.gen_os_clients(self)
+        if output[0]:
+            self.os['clients'] = output[1]
+        else:
+            pytest.exit(msg="Error: Failed to provision OpenStack clients")
+
+        output = os_utils.config_os_pre(self)
+        if output[0]:
+            logging.info("Preconfigure of OpenStack infra successful")
+        else:
+            pytest.exit(msg="Error: Failed to complete 'Pre' setup in Openstack")
+
+
+
+
+
+
+
+
          
  
