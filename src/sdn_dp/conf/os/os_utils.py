@@ -10,6 +10,7 @@ from novaclient import client as nclient
 from neutronclient.neutron import client as neuclient
 from sdn_dp.conf.common.constants import OSPRECONFIG 
 from sdn_dp.conf.common.constants import OSBRIDGEMAPPING
+#import sdn_dp.conf.os.os_lib as os_lib
 import pdb
 
 
@@ -69,7 +70,7 @@ def config_os_pre(self):
 #                                         disk_format='qcow2')
 #            glance.images.upload(image.id, open(item['path'], 'rb'))
 
-        # Configure 'small' flavor inside of nova
+        # Configure flavor list defined inside of OSPRECONFIG
         flavor_list = OSPRECONFIG.flavors
         nova = self.os['clients']['nova']['client'] 
         self.os['flavors'] = {}
@@ -98,25 +99,28 @@ def config_os_networks(self):
     configure all tenant and provider networks inside Openstack.
     '''
     try:
+        pdb.set_trace()
         net_list = self.topo['network']
         neutron = self.os['clients']['neutron']['client'] 
         for net in net_list:
-            net_name = net['tenant_net_name']
+            net_name = '%s-tenant' % net['tenant_net_name']
             tenant_cidr = net['tenant_cidr'] 
             edge_list = net['edge_list']
+
+            # First configure the tenant network
+            out = os_lib.os_create_tenant_net(neutron, net_name, \
+                                              port_security=False)
+            if out[0]:
+                # Assign the OS network object ID to all gateways 
+                for e_item in net.edge_list:
+                    e_item.os['tenant_net'] = out[1]
+            else:
+                logging.error("config_os_networks: Failed to provision \
+                               OS network for network: %s" % net_name)
+
+            # Next configure OS tenant subnets
+
             
-            # Configure the 'tenant' VXLAN network in Openstack 
-            body = {
-                    'name': net_name,
-                    'port_security_enabled': OSPRECONFIG.port_security,
-                    'shared': 'True'
-                    #'provider:network_type': 'vxlan',
-                    #'provider:segmentation_id': 
-                    #'provider:physical_network': OSBRIDGEMAPPING.OS_PHYSICAL_NET
-                    } 
-            out = neutron.create_network({'network':body})
-            net.os['tenant']=out 
-            net.os['tenant_id'] = out.id
     except:
         pass
             

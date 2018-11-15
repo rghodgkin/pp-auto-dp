@@ -19,11 +19,21 @@ class COMMON(object):
         self.config = {} 
         self.sdn = []
         self.os = {} 
+        # Populates the self.config with config info
         self.gen_config_dict()
+        # Expands topo for all counts and assigns IP's/vlans for
+        #  all tenant and provider nets
         self.gen_topo_dict()
+        # Generates the SDN objects for overall 'networks' and 
+        #  all edge devices: netrouter, cloud, site, mobile
+        #  Note: topo data gets copied directly into sdn.topo dict
         self.gen_sdn_data() 
-        pdb.set_trace()
+        # Generates the OpenStack infrastructure needed: images,
+        #  flavors, networks
+        # Note: as creates nets it backfills ID's into SDN gateway
+        #  objects
         self.gen_os_infra() 
+        pdb.set_trace()
 
     def gen_topo_dict(self):
         '''
@@ -65,7 +75,7 @@ class COMMON(object):
         This method will parse config dict and instantiate all network
           objects along with sub edge objects inside (via method calls)
         '''
-        output = sdn_utils.gen_sdn_data(self.topo, self)
+        output = sdn_utils.gen_sdn_net_data(self.topo, self)
         if output[0]:
             self.sdn = output[1]
         else:
@@ -94,6 +104,12 @@ class COMMON(object):
             logging.info("Preconfigure of OpenStack infra successful")
         else:
             pytest.exit(msg="Error: Failed to complete 'Pre' setup in Openstack")
+
+        output = os_utils.config_os_networks(self)
+#        if output[0]:
+#            logging.info("Configure of OpenStack networks successful")
+#        else:
+#            pytest.exit(msg="Error: Failed to configure Openstack networks")
 
 
 

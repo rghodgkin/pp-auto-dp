@@ -10,6 +10,9 @@ class SdnNetObj(object):
     def __init__(self, topo_dict, common):
         self.topo = topo_dict
         self.common = common
+        self.tenant_cidr = self.topo['tenant_cidr']
+        self.tenant_net_name = self.topo['tenant_net_name']
+        self.edge_list = []
         self.edge_netrouter_list = []
         self.edge_cloud_list = []
         self.edge_site_list = []
@@ -23,38 +26,48 @@ class SdnNetObj(object):
         '''
         logging.info("Inside gen_edge_data") 
         logging.info("Topo data is: %s" % self.topo)
-        
+
         for edge_item in self.topo['edge_list']:
             self.create_edge_inst(edge_item['type'], edge_item)
-    
+
     def create_edge_inst(self, type, topo_dict):
+        print("I'm inside create_edge_inst: %s, %s" % (type, topo_dict['name']))
+
         if type == "netrouter":
             tmp_obj = SdnNetrouterCloudObj(topo_dict, self.common)
             self.edge_netrouter_list.append(tmp_obj)
+            self.edge_list.append(tmp_obj)
+
         elif type == "cloud":
             tmp_obj = SdnEdgeCloudObj(topo_dict, self.common)
             self.edge_cloud_list.append(tmp_obj) 
+            self.edge_list.append(tmp_obj)
 
         elif type == "site":
             tmp_obj = SdnEdgeSiteCloudObj(topo_dict, self.common)
             self.edge_site_list.append(tmp_obj) 
+            self.edge_list.append(tmp_obj)
 
         elif type == "mobile":
             tmp_obj = SdnEdgeMobileCloudObj(topo_dict, self.common)
-            self.edge_mobile_list.append(tmp_obj) 
+            self.edge_mobile_list.append(tmp_obj)
+            self.edge_list.append(tmp_obj)
 
     def list_edge_inst(self):
         '''
         This function will list all the 'edge' instances from
         the various *_cloud_list arrays 
         ''' 
-        pass
+        return self.edge_list 
         
 
 class SdnEdgeParent(object):
     def __init__(self, topo_dict, common):
-        self.topo = topo_dict
+        self.topo = topo_dict.copy()
+        self.name = self.topo['name']
         self.common = common
+        self.os = {'tenant_net':'', 'tenant_port_id':'', \
+                'server_id':''}
 
 class SdnNetrouterCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
@@ -69,13 +82,14 @@ class SdnNetrouterCloudObj(SdnEdgeParent):
 class SdnEdgeCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
         SdnEdgeParent.__init__(self, topo_dict, common)
-        #self.aws_data = {}
-        #self.aws_deploy()
-        self.os_data = ()
-        #self.os_deploy()
-        
+        # Initialize cloud specific Openstack dict keys
+        self.os['provider_net_id'] = ''
+        self.os['provider_port_id'] = ''
 
     def sdn_deploy(self):
+        # Needs to do following: 1) get port from tenant net (self.os.tenant_net_id)
+        #                        2) get port from provider net (self.os.provider_net_id)
+        #                        3) Create server instance with ports
         pass
 
     def sdn_destroy(self):

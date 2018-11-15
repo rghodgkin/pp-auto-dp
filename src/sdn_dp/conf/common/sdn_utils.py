@@ -38,7 +38,7 @@ def gen_sdn_topo(tv, common):
       net_count = tv['sdn']['network']['count']
       net_cntr = 1
       for net_item in range(0,net_count):
-
+          
           net_kl = TopoTemps.network.copy()
           net_kl['name'] = "%s-%s" % (sdn_name, net_cntr)
           net_kl['tenant_net_name'] = "%s-network-%s" % (sdn_name, net_cntr) 
@@ -122,7 +122,7 @@ def gen_sdn_topo(tv, common):
           
       return 0, {} 
   
-def gen_sdn_data(topo, common):
+def gen_sdn_net_data(topo, common):
     """
     This function returns a list of 'network' objects that ultimately populates 
     'common.sdn[]' list with network objects
@@ -132,9 +132,7 @@ def gen_sdn_data(topo, common):
         topo_net_list = topo['network']
         for net_item in topo_net_list:
             x = sdn_class.SdnNetObj(net_item, common)
-            x.gen_edge_data()
-            ret_net_list.append(x) 
-    
+            ret_net_list.append(x)
         return 1, ret_net_list
 
     except: 
