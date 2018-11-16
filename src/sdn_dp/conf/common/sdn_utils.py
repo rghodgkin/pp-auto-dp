@@ -46,32 +46,34 @@ def gen_sdn_topo(tv, common):
           net_kl['edge_list'] = [] 
   
           edge_list = tv['sdn']['network']['edge_list']
-          edge_cntr = 1
+          edge_net_cntr = 1
+          edge_cloud_cntr = 1
+          edge_site_cntr = 1
+          edge_mobile_cntr = 1
+
           for edge_item in edge_list:
 
             if edge_item['type'] == "netrouter":
               edge_count = edge_item['count']
               edge_engine = edge_item['engine']
-              edge_inst_cntr = 1
               for e_item in edge_item['engine']:
                 for n_item in range(0,edge_count):
                   edge_kl = TopoTemps.netrouter.copy()
-                  edge_kl['name'] = "%s-netrtr-%s-%s" % (sdn_name, net_cntr, edge_inst_cntr)
+                  edge_kl['name'] = "%s-netrtr-%s-%s" % (sdn_name, net_cntr, edge_net_cntr)
                   edge_kl['engine'] = e_item 
                   edge_kl['tenant_ip'] = ""
   
                   # Add edge_kl to net_kl['edge_list']
                   net_kl['edge_list'].append(edge_kl)
-                  edge_inst_cntr += 1
+                  edge_net_cntr += 1
 
             elif edge_item['type'] == "cloud":
               edge_count = edge_item['count']
               edge_engine = edge_item['engine'] 
-              edge_inst_cntr = 1
               for e_item in edge_item['engine']: 
                 for c_item in range(0,edge_count):
                   edge_kl = TopoTemps.cloud.copy()
-                  edge_kl['name'] = "%s-Cloud-%s-%s" % (sdn_name, net_cntr, edge_inst_cntr)
+                  edge_kl['name'] = "%s-Cloud-%s-%s" % (sdn_name, net_cntr, edge_cloud_cntr)
                   edge_kl['engine'] = e_item
                   edge_kl['cloud_provider'] = edge_item['cloud_provider']
                   edge_kl['physical_net'] =  OSBRIDGEMAPPING.OS_PHYSICAL_NET
@@ -89,28 +91,25 @@ def gen_sdn_topo(tv, common):
     
                   # Add edge_kl to net_kl['edge_list']
                   net_kl['edge_list'].append(edge_kl)
-                  edge_inst_cntr += 1
+                  edge_cloud_cntr += 1
                     
             elif edge_item['type'] == "site":
               edge_count = edge_item['count']
               edge_engine = edge_item['engine']
-              edge_inst_cntr = 1
               for e_item in edge_item['engine']:
                 for n_item in range(0,edge_count):
                   edge_kl = TopoTemps.site.copy()
-                  edge_kl['name'] = "%s-site-%s-%s" % (sdn_name, net_cntr, edge_inst_cntr)
+                  edge_kl['name'] = "%s-site-%s-%s" % (sdn_name, net_cntr, edge_site_cntr)
                   edge_kl['engine'] = e_item
                   edge_kl['vpn_net'] = ""
 
                   # Add edge_kl to net_kl['edge_list']
                   net_kl['edge_list'].append(edge_kl)
-                  edge_inst_cntr += 1 
+                  edge_site_cntr += 1 
 
             elif edge_item['type'] == "mobile":
               pass
   
-            edge_cntr += 1 
-
           # Add net_kl to sdn['network']
           sdn['network'].append(net_kl)
           net_cntr += 1

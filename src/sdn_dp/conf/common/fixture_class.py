@@ -33,7 +33,6 @@ class COMMON(object):
         # Note: as creates nets it backfills ID's into SDN gateway
         #  objects
         self.gen_os_infra() 
-        pdb.set_trace()
 
     def gen_topo_dict(self):
         '''
@@ -103,13 +102,21 @@ class COMMON(object):
         if output[0]:
             logging.info("Preconfigure of OpenStack infra successful")
         else:
-            pytest.exit(msg="Error: Failed to complete 'Pre' setup in Openstack")
+            pytest.exit(msg="Error: Failed to complete Pre-setup in Openstack")
 
-        output = os_utils.config_os_networks(self)
-#        if output[0]:
-#            logging.info("Configure of OpenStack networks successful")
-#        else:
-#            pytest.exit(msg="Error: Failed to configure Openstack networks")
+        output = os_utils.config_os_tenant_networks(self)
+        if output[0]:
+            logging.info("Configure of OpenStack tenant networks successful")
+        else:
+            pytest.exit(msg="Error: Failed to configure Openstack tenant networks")
+
+        output = os_utils.config_os_provider_networks(self)
+        if output[0]:
+            logging.info("Configure of OpenStack provider networks successful")
+        else:
+            pytest.exit(msg="Error: Failed to configure Openstack provider networks")
+
+
 
 
 

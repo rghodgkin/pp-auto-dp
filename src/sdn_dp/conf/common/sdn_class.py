@@ -12,6 +12,8 @@ class SdnNetObj(object):
         self.common = common
         self.tenant_cidr = self.topo['tenant_cidr']
         self.tenant_net_name = self.topo['tenant_net_name']
+        self.tenant_net_obj = ""
+        self.tenant_net_subnet_obj = ""
         self.edge_list = []
         self.edge_netrouter_list = []
         self.edge_cloud_list = []
@@ -66,8 +68,8 @@ class SdnEdgeParent(object):
         self.topo = topo_dict.copy()
         self.name = self.topo['name']
         self.common = common
-        self.os = {'tenant_net':'', 'tenant_port_id':'', \
-                'server_id':''}
+        self.os = {'tenant_net_obj':'', 'tenant_net_subnet_obj':'', 'tenant_port_obj':'', \
+                'server_obj':''}
 
 class SdnNetrouterCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
@@ -83,8 +85,8 @@ class SdnEdgeCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
         SdnEdgeParent.__init__(self, topo_dict, common)
         # Initialize cloud specific Openstack dict keys
-        self.os['provider_net_id'] = ''
-        self.os['provider_port_id'] = ''
+        self.os['provider_net_obj'] = ''
+        self.os['provider_port_obj'] = ''
 
     def sdn_deploy(self):
         # Needs to do following: 1) get port from tenant net (self.os.tenant_net_id)

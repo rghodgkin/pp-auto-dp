@@ -23,9 +23,9 @@ class TopoTemps(object):
     #        'sdn_network':'', 'sdn_zone':'', 'type':'mobile'}
 
 class SDNVLAN(object):
-    AWS_VLAN_START = 150
+    AWS_VLAN_START = 160
     AWS_VLAN_MAX = 199 
-    GOOGLE_VLAN_START = 200
+    GOOGLE_VLAN_START = 210
     GOOGLE_VLAN_MAX = 249
 
 class SDNCIDR(object):
