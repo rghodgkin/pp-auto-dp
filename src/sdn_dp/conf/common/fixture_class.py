@@ -32,7 +32,7 @@ class COMMON(object):
         #  flavors, networks
         # Note: as creates nets it backfills ID's into SDN gateway
         #  objects
-        self.gen_os_infra() 
+        #self.gen_os_infra() 
 
     def gen_topo_dict(self):
         '''

@@ -7,7 +7,8 @@ import sdn_dp.conf.common.logging_util as logging_util
 
 pytest_plugins = [
     'sdn_dp.fixtures.hook',
-    'sdn_dp.fixtures.common'
+    'sdn_dp.fixtures.common',
+    'sdn_dp.fixtures.setup_status'
 ]
 
 def pytest_addoption(parser):
