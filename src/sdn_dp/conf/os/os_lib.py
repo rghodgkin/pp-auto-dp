@@ -116,6 +116,40 @@ def os_create_subnet(neutron, name, net_id, cidr, **kwargs):
         logging.error("os_create_subnet failed for network %s" % name)
         return 0, {}
 
+def os_create_port(neutron, name, server_id, net_id, **kwargs):
+    '''
+    This Openstack function will create a port on specified network:
+            name = name assigned inside Openstack
+            server_id = server device to connect port
+            net_id = Network ID to attach subnet to
+
+            kwargs:
+               None
+    '''
+
+    try:
+
+        in_body = {
+                      'admin_state_up': True, 
+                      'name': name,
+                      'device_id': server_id,
+                      'network_id': net_id
+                  }
+
+        body = {
+                  'port':[
+                              in_body
+                         ]
+               }
+
+        out = neutron.create_port(body=body)
+        return 1, out
+
+    except:
+        logging.error("os_create_port failed for network %s" % name)
+        return 0, {}
+
+
 
 
 

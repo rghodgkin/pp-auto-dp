@@ -70,15 +70,29 @@ class SdnEdgeParent(object):
         self.common = common
         self.os = {'tenant_net_obj':'', 'tenant_net_subnet_obj':'', 'tenant_port_obj':'', \
                 'server_obj':''}
+        self.deploy_state = 0
 
 class SdnNetrouterCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
         SdnEdgeParent.__init__(self, topo_dict, common)
 
-    def sdn_deploy(self):
-        pass
+    def deploy(self):
+        if self.deploy_state == 0:
+            if self.os['tenant_port_obj'] == '':
+                # We must allocate a port from tenant network
+                neutron = common.os['clients']['neutron']['client']
+                name = '%s-tenant-port' % self.name
+                server_id = 'xx'
+                net_id = self.os['tenant_net_obj']['id'] 
+                out = os_create_port(neutron, name, server_id, net_id) 
+                self.os['tenant_port_obj'] = out
 
-    def sdn_destroy(self):
+        else:
+            logging.info("SdnNetrouterCloudObj: deploy of %s failed b/c \
+                          already in deployed state" % selfname)
+            return 0
+
+    def destroy(self):
         pass
 
 class SdnEdgeCloudObj(SdnEdgeParent):
@@ -88,13 +102,13 @@ class SdnEdgeCloudObj(SdnEdgeParent):
         self.os['provider_net_obj'] = ''
         self.os['provider_port_obj'] = ''
 
-    def sdn_deploy(self):
+    def _deploy(self):
         # Needs to do following: 1) get port from tenant net (self.os.tenant_net_id)
         #                        2) get port from provider net (self.os.provider_net_id)
         #                        3) Create server instance with ports
         pass
 
-    def sdn_destroy(self):
+    def destroy(self):
         pass
 
     def aws_deploy(self):
@@ -114,20 +128,20 @@ class SdnEdgeSiteCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
         SdnEdgeParent.__init__(self, topo_dict, common) 
 
-    def sdn_deploy(self):
+    def deploy(self):
         pass
 
-    def sdn_destroy(self):
+    def destroy(self):
         pass
 
 class SdnEdgeMobileCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
         SdnEdgeParent.__init__(self, topo_dict, common)
 
-    def sdn_deploy(self):
+    def deploy(self):
         pass
 
-    def sdn_destroy(self):
+    def destroy(self):
         pass
 
         

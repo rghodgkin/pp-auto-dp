@@ -12,8 +12,18 @@ def dp_setup(common):
     dss = dp_setup_obj()
 
     try:
-        print("Setting up for testcaes")
-        # Do work
+        logging.info("testcases/conftest: Executing setup for sdn_dp \
+                      testcases")
+        pdb.set_trace() 
+        for net in common.sdn:
+            for nrtr in net.edge_netrouter_list:
+                nrtr.deploy()
+            for cgw in net.edge_cloud_list:
+                cgw.deploy()
+            for sgw in net.edge_site_list:
+                sgw.deploy()
+            for mgw in net.edge_mobile_list:
+                mgw.deploy()
         dss.setup_status = 1
 
     except:
