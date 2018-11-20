@@ -4,18 +4,21 @@ class TopoTemps(object):
     sdn = {'name':'', 'network_list':[]}
     network = {'name':'', 'tenant_net_name':'', 'tenant_cidr':'', 'edge_list':[], \
             'os_data':{}}
-    netrouter = {'type':'netrouter', 'name':'', 'engine':'', \
-                 'tenant_ip':'', 'os_data':{}}
+    netrouter = {'type':'netrouter', 'name':'', 'engine':'', 'tenant_net_name':'', \
+            'tenant_net':'', 'tenant_ip':'', 'tenant_mac': '', 'os_data':{}}
     #network = {'name':'', 'sdn_description':'', 'sdn_account': '', \
     #           'sdn_network_type': '', 'sdn_zone': '', 'edge_list':[]}
     cloud = {'name':'', 'cloud_provider':'', 'engine':'', 'physical_net':'', \
-            'segment_id':'', 'tenant_ip':'', 'provider_net':'', 'provider_ip':'', \
+            'segment_id':'', 'tenant_net_name':'', 'tenant_net':'', 'tenant_ip':'', \
+            'tenant_mac':'', 'provider_net_name': '', 'provider_net':'', \
+            'provider_ip':'', 'provider_mac':'', \
             'os_data':{}, 'type':'cloud'}
     #cloud = {'name':'', 'sdn_description':'', 'sdn_network':'', \
     #         'sdn_cloud_provider':'', 'aws_cloud_region':'', \
     #         'sdn_cloud_location':'', 'aws_cloud_account':'', \
     #         'IPv4_CIDR_block':'', 'type':'cloud'} 
-    site = {'type':'site', 'name':'', 'engine':'', 'vpn_net':'', 'os_data':{}}
+    site = {'type':'site', 'name':'', 'engine':'', 'tenant_net_name':'', \
+            'tenant_net':'', 'tenant_ip':'', 'tenant_mac':'', 'vpn_net':'', 'os_data':{}}
     #site = {'name':'', 'sdn_description':'', \
     #        'sdn_network':'', 'sdn_zone':'', 'type':'site'}
     mobile = {'type':'mobile', 'name':'', 'engine':'', 'mobile_net':'', 'os_data':{}}
@@ -52,9 +55,23 @@ class OSPRECONFIG(object):
 #            'container_format':'bare', 'disk_format':'raw'}
              ]
     flavors = [
-               {'name':'c.small', 'vcpus':1, 'ram':'1024', 'disk':'1'}
+               {'name':'c1.small', 'vcpus':1, 'ram':'1024', 'disk':'1'}
               ]
     port_security = 'False'
+
+class OSCLOUDIMAGE(object):
+    netrouter = 'ubuntu-18.04-vpn'
+    cloud = 'ubuntu-18.04-vpn'
+    site = 'ubuntu-18.04-vpn'
+    mobile = 'ubuntu-18.04-vpn'
+
+class OSCLOUDFLAVOR(object):
+    netrouter = 'c1.small'
+    cloud = 'ubuntu-18.04-vpn'
+    site = 'ubuntu-18.04-vpn'
+    mobile = 'ubuntu-18.04-vpn'
+
+
 
 
     

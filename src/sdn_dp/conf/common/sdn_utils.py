@@ -42,7 +42,8 @@ def gen_sdn_topo(tv, common):
           net_kl = TopoTemps.network.copy()
           net_kl['name'] = "%s-%s" % (sdn_name, net_cntr)
           net_kl['tenant_net_name'] = "%s-network-%s" % (sdn_name, net_cntr) 
-          net_kl['tenant_cidr'] = str(tenant_sub_list.pop())
+          tenant_cidr = str(tenant_sub_list.pop())
+          net_kl['tenant_cidr'] = tenant_cidr
           net_kl['edge_list'] = [] 
   
           edge_list = tv['sdn']['network']['edge_list']
@@ -61,7 +62,9 @@ def gen_sdn_topo(tv, common):
                   edge_kl = TopoTemps.netrouter.copy()
                   edge_kl['name'] = "%s-netrtr-%s-%s" % (sdn_name, net_cntr, edge_net_cntr)
                   edge_kl['engine'] = e_item 
+                  edge_kl['tenant_net_name'] = "%s-network-%s-tenant" % (sdn_name, net_cntr)
                   edge_kl['tenant_ip'] = ""
+                  edge_kl['tenant_net'] = tenant_cidr
   
                   # Add edge_kl to net_kl['edge_list']
                   net_kl['edge_list'].append(edge_kl)
@@ -76,6 +79,7 @@ def gen_sdn_topo(tv, common):
                   edge_kl['name'] = "%s-Cloud-%s-%s" % (sdn_name, net_cntr, edge_cloud_cntr)
                   edge_kl['engine'] = e_item
                   edge_kl['cloud_provider'] = edge_item['cloud_provider']
+                  edge_kl['tenant_net_name'] = "%s-network-%s-tenant" % (sdn_name, net_cntr)
                   edge_kl['physical_net'] =  OSBRIDGEMAPPING.OS_PHYSICAL_NET
                   if edge_item['cloud_provider'].lower() == 'aws':
                       edge_kl['segment_id'] = aws_vlan
@@ -86,8 +90,12 @@ def gen_sdn_topo(tv, common):
                       edge_kl['provider_net'] = str(goog_sub_list.pop())
                       google_vlan += 1 
                   edge_kl['tenant_ip'] = ""
-                  edge_kl['provider_ip'] =  utils.return_ip_subnets(edge_kl['provider_net'], \
-                          32, skip_zero=True).pop() 
+                  edge_kl['tenant_net'] = tenant_cidr
+                  edge_kl['provider_net_name'] = "%s-provider" % edge_kl['name']
+                  edge_kl['provider_ip'] = ""
+                  #edge_kl['provider_ip'] =  utils.return_ip_subnets(edge_kl['provider_net'], \
+                  #        32, skip_zero=True).pop() 
+
     
                   # Add edge_kl to net_kl['edge_list']
                   net_kl['edge_list'].append(edge_kl)
@@ -101,6 +109,9 @@ def gen_sdn_topo(tv, common):
                   edge_kl = TopoTemps.site.copy()
                   edge_kl['name'] = "%s-site-%s-%s" % (sdn_name, net_cntr, edge_site_cntr)
                   edge_kl['engine'] = e_item
+                  edge_kl['tenant_net_name'] = "%s-network-%s-tenant" % (sdn_name, net_cntr)
+                  edge_kl['tenant_ip'] = ""
+                  edge_kl['tenant_net'] = tenant_cidr
                   edge_kl['vpn_net'] = ""
 
                   # Add edge_kl to net_kl['edge_list']

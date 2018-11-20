@@ -6,20 +6,14 @@ sdn:
       - type: netrouter
         count: 1     
         engine:
-        - e1
+        - e2
       - type: cloud
         cloud_provider: aws
-        count: 1
+        count: 2
         engine:
-        - e1
         - e2
       - type: cloud
         cloud_provider: google 
         count: 1
         engine:
-        - e1
         - e2
-      - type: site
-        count: 1
-        engine:
-        - e2 

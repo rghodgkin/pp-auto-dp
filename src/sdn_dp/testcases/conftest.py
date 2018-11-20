@@ -14,7 +14,7 @@ def dp_setup(common):
     try:
         logging.info("testcases/conftest: Executing setup for sdn_dp \
                       testcases")
-        pdb.set_trace() 
+        
         for net in common.sdn:
             for nrtr in net.edge_netrouter_list:
                 nrtr.deploy()

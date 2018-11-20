@@ -3,6 +3,7 @@
 
 import logging
 import pdb
+import time
 
 def os_create_tenant_net(neutron, name, **kwargs):
     '''
@@ -147,6 +148,25 @@ def os_create_port(neutron, name, server_id, net_id, **kwargs):
 
     except:
         logging.error("os_create_port failed for network %s" % name)
+        return 0, {}
+
+def os_create_server(nova, name, image, flavor, net_list, **kwargs):
+    '''
+    This Openstack function will create a new server using the given
+    parameters
+           
+    '''
+
+    try:
+
+        server_str = "name, image, flavor"
+
+        out = nova.servers.create(server_str) 
+
+        time.sleep(5)
+
+    except:
+        logging.error("os_create_server failed for server %s" % name)
         return 0, {}
 
 

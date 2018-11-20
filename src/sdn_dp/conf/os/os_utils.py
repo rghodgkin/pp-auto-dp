@@ -124,7 +124,7 @@ def config_os_tenant_networks(self):
                 net.tenant_net_obj = out[1]
                 # Assign the OS network object ID to all gateways 
                 for e_item in edge_list:
-                    e_item.os['tenant_net_obj'] = out[1]
+                    e_item.os['networks']['tenant']['net_obj'] = out[1]
 
             else:
                 logging.error("config_os_networks: Failed to provision \
@@ -139,7 +139,7 @@ def config_os_tenant_networks(self):
                 net.tenant_net_subnet_obj = out[1]
                 # Assign the OS network object ID to all gateways
                 for e_item in edge_list:
-                    e_item.os['tenant_net_subnet_obj'] = out[1]
+                    e_item.os['networks']['tenant']['subnet_obj'] = out[1]
             else:
                 logging.error("config_os_subnet: Failed to provision \
                                OS subnet for network: %s" % net_name)
@@ -185,7 +185,7 @@ def config_os_provider_networks(self):
                                               port_security=False)
                 if out[0]:
                     # Assign the OS network object to the cloud provider_net_obj 
-                    c_item.os['provider_net_obj'] = out[1] 
+                    c_item.os['networks']['provider']['net_obj'] = out[1] 
 
                 else:
                     logging.error("config_os_networks: Failed to provision \
@@ -193,11 +193,11 @@ def config_os_provider_networks(self):
 
                 # Next configure OS tenant subnets
                 out = os_lib.os_create_subnet(neutron, net_name, \
-                                c_item.os['provider_net_obj']['network']['id'],
+                                c_item.os['networks']['provider']['net_obj']['network']['id'],
                                 prov_cidr)
 
                 if out[0]:
-                    c_item.os['provider_port_obj'] = out[1]
+                    c_item.os['networks']['provider']['port_obj'] = out[1]
 
                 else:
                     logging.error("config_os_provider_networks: Failed to provision \
