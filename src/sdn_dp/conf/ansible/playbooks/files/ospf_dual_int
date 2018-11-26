@@ -1,0 +1,6 @@
+conf t
+router ospf 1
+interface eth0
+ip ospf 1 area 0
+interface eth1
+ip ospf 1 area 0

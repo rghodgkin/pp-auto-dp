@@ -4,6 +4,7 @@ import yaml
 import pdb
 import os
 import logging
+import subprocess
 import ipaddress
 
 def import_yaml_to_dict(file):
@@ -43,6 +44,34 @@ def return_ip_subnets(network, newprefix, **kwargs):
             return return_list
 
     return return_list
+
+
+def ssh_exec(host, command, **kwargs):
+    """
+    This function executes a basic ssh command based on the ther
+    arguments provided.
+          host = x.x.x.x or hostname
+          command = string command to execute
+          user = user other than default
+          key = path to non-default private ssh key
+
+    """
+    cmd = "ssh "
+    if kwargs.has_key('key'):
+        cmd += '-i %s ' % kwargs['key']
+    if kwargs.has_key('user'):
+        cmd += '%s@' % kwargs['user']
+    cmd += '%s %s' % (host, command)
+    try:
+        out = subprocess.check_output(cmd, shell=True)
+        return 1, out
+    except:
+        return 0, {}
+    return 
+
+
+
+
 
     
      

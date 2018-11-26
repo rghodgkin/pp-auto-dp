@@ -3,6 +3,8 @@
 
 import logging
 import pdb
+import subprocess
+import time
 import sdn_dp.conf.common.utils as utils
 import sdn_dp.conf.common.sdn_class as sdn_class
 from sdn_dp.conf.common.constants import TopoTemps
@@ -150,4 +152,39 @@ def gen_sdn_net_data(topo, common):
 
         return 0, {}
 
+
+def ansible_deploy_lxd_ospf(common, cloud_obj):
+    """
+    This function executes Ansible playbook for configure of basic OSPF
+    into the LXD FRR instance.
+    """
+
+    try: 
+        server_obj = cloud_obj.os['server']['server_obj']
+        # The line below is a workaround to refresh the 'server' object b/c
+        #  it continually comes back with ._info data only half defined
+        dir(server_obj)
+        for loop in range(10):
+            if server_obj._info.has_key('OS-EXT-SRV-ATTR:instance_name') == False:
+                time.sleep(2)
+                print("Loop cntr =: %s" % loop)
+            else:
+                lxd_inst_name = str(server_obj._info['OS-EXT-SRV-ATTR:instance_name'])
+                break
+        engine_ip = common.config['devices']['engines'][cloud_obj.topo['engine']]
+        edge_type = cloud_obj.topo['type'] 
+        if edge_type == "cloud":
+            script = 'lxd-ospf-dual.yml'
+        else:
+            script = 'lxd-ospf-single.yml'
+
+        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                       --extra-vars "container_name=%s"' % \
+                       (engine_ip, script, lxd_inst_name)
+        out = subprocess.check_output(ansible_cmd, shell=True)
+
+        return 1, out
+    except:
+        logging.error("Error: ansible_deploy_ospf_lxd: failed to provision properly")
+        return 0, {}
     

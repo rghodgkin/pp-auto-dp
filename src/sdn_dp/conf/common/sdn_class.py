@@ -73,8 +73,15 @@ class SdnEdgeParent(object):
         self.os = {'networks':{'tenant':{'net_obj':'', 'subnet_obj':'', \
                    'port_name':'', 'port_obj':''}}, 
                    'server':{'server_obj':''}}
+        self.deploy_state = 0
+
+    def destroy(self):
+        server = self.os['server']['server_obj'] 
+        logging.info("destroy: deleting server %s" % self.name)
+        server.delete()
 
         self.deploy_state = 0
+
 
 class SdnNetrouterCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
@@ -82,18 +89,30 @@ class SdnNetrouterCloudObj(SdnEdgeParent):
 
     def deploy(self):
         if self.deploy_state == 0:
-            if self.os['networks']['tenant']['port_obj'] == '':
-                nova = self.common.os['clients']['nova']['client']
+            nova = self.common.os['clients']['nova']['client']
 
-                image = nova.glance.find_image('%s' % OSCLOUDIMAGE.netrouter)
-                flavor_name = OSCLOUDFLAVOR.netrouter
-                flavor = nova.flavors.find(name=flavor_name)
-                net_tenant = self.os['networks']['tenant']['net_obj']['network']['id']
-                nics = [{'net-id': net_tenant, 'name': 'tenant-port'}]
-                instance = nova.servers.create(name=self.name, image=image, \
+            image = nova.glance.find_image('%s' % OSCLOUDIMAGE.netrouter)
+            flavor_name = OSCLOUDFLAVOR.netrouter
+            flavor = nova.flavors.find(name=flavor_name)
+            net_tenant = self.os['networks']['tenant']['net_obj']['network']['id']
+            nics = [{'net-id': net_tenant, 'name': 'tenant-port'}]
+            instance = nova.servers.create(name=self.name, image=image, \
                                                flavor=flavor, nics=nics, \
                                                availability_zone=self.topo['engine'])
-                self.os['server']['server_obj'] = instance
+            self.os['server']['server_obj'] = instance
+
+            for loop in range(10):
+                time.sleep(2)
+                print("Loop cntr =: %s" % loop)
+                instance_net_info = instance.interface_list()
+                if len(instance_net_info) == 2:
+                    break
+            self.topo['tenant_ip'] = instance_net_info[0].fixed_ips[0]['ip_address']
+            self.topo['tenant_mac'] = instance_net_info[0].mac_addr
+
+            self.deploy_state = 1
+
+            return 1
 
 
         else:
@@ -101,8 +120,6 @@ class SdnNetrouterCloudObj(SdnEdgeParent):
                           already in deployed state" % selfname)
             return 0
 
-    def destroy(self):
-        pass
 
 class SdnEdgeCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
@@ -125,7 +142,7 @@ class SdnEdgeCloudObj(SdnEdgeParent):
             net_provider = self.os['networks']['provider']['net_obj']['network']['id']
             nics = [{'net-id': net_tenant, 'name': '%s-tenant-port' % self.name},
                     {'net-id': net_provider, 'name': '%s-provider-port' % self.name}]
-            pdb.set_trace()
+            
             instance = nova.servers.create(name=self.name, image=image, \
                                            flavor=flavor, nics=nics, \
                                            availability_zone=self.topo['engine'])
@@ -173,21 +190,6 @@ class SdnEdgeCloudObj(SdnEdgeParent):
                           already in deployed state" % selfname)
             return 0 
 
-    def destroy(self):
-        pass
-
-    def aws_deploy(self):
-        status = aws_utils.deploy_aws_cloud(self.topo)
-        if status[0] == 1:
-            #self.aws_data = aws_utils.deploy_aws_cloud(self.topo)
-            return 1
-        else:
-            logging.error("Error: Edge Cloud.aws_deploy: Failed to deploy edge \
-                           cloud %s" % self.topo.name)
-            return 0
-
-    def aws_destroy(self):
-        pass 
 
 class SdnEdgeSiteCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
@@ -196,8 +198,6 @@ class SdnEdgeSiteCloudObj(SdnEdgeParent):
     def deploy(self):
         pass
 
-    def destroy(self):
-        pass
 
 class SdnEdgeMobileCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common):
@@ -206,8 +206,6 @@ class SdnEdgeMobileCloudObj(SdnEdgeParent):
     def deploy(self):
         pass
 
-    def destroy(self):
-        pass
 
         
 

@@ -1,0 +1,25 @@
+---
+ - name: Configure OSPF for LXD container
+   hosts: all
+   gather_facts: false
+
+   tasks: 
+   - name: Copy OSPF daemons file to lxd container
+     copy:
+       src: files/ospf_lxd_daemons
+       dest: /var/lib/lxd/containers/{{ container_name }}/rootfs/etc/frr/daemons
+     become: yes
+  
+   - name: Splice OSPF configuration into frr.conf
+     blockinfile:
+        path: /var/lib/lxd/containers/{{ container_name }}/rootfs/etc/frr/frr.conf
+        block: |
+                interface eth0
+                 ip ospf 1 area 0
+                !
+                router ospf 1
+        insertafter: '^username*'
+     become: yes
+  
+   - name: Restart LXD container
+     command: lxc restart {{ container_name }}
