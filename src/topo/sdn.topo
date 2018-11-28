@@ -13,3 +13,5 @@ sdn:
         count: 1
         engine:
         - e2
+  other:
+    traffic: external

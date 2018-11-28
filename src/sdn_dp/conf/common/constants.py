@@ -1,7 +1,7 @@
 import os
 
 class TopoTemps(object):
-    sdn = {'name':'', 'network_list':[]}
+    sdn = {'name':'', 'network':[], 'other':''}
     network = {'name':'', 'tenant_net_name':'', 'tenant_cidr':'', 'edge_list':[], \
             'os_data':{}}
     netrouter = {'type':'netrouter', 'name':'', 'engine':'', 'tenant_net_name':'', \
@@ -11,7 +11,7 @@ class TopoTemps(object):
     cloud = {'name':'', 'cloud_provider':'', 'engine':'', 'physical_net':'', \
             'segment_id':'', 'tenant_net_name':'', 'tenant_net':'', 'tenant_ip':'', \
             'tenant_mac':'', 'provider_net_name': '', 'provider_net':'', \
-            'provider_ip':'', 'provider_mac':'', \
+            'provider_ip':'', 'provider_mac':'', 'traffic_state':0, \
             'os_data':{}, 'type':'cloud'}
     #cloud = {'name':'', 'sdn_description':'', 'sdn_network':'', \
     #         'sdn_cloud_provider':'', 'aws_cloud_region':'', \
@@ -42,9 +42,6 @@ class SDNCIDR(object):
 class OSBRIDGEMAPPING(object):
     OS_PHYSICAL_NET = 'vlan'
            
-class AwsVgw(object):
-    AWS_BGP_ASN = 7224 
-
 class OSPRECONFIG(object):
     images = [
 #               {'name':'image_netrouter', 'path':'/tmp/images/vpn-sgw-image-ubuntu18.04-0.2.1.tar.gz', \
@@ -70,6 +67,11 @@ class OSCLOUDFLAVOR(object):
     cloud = 'ubuntu-18.04-vpn'
     site = 'ubuntu-18.04-vpn'
     mobile = 'ubuntu-18.04-vpn'
+
+class TRAFFICINFO(object):
+    # The below will configure external traffic gen ints with x.x.x.200/24
+    EXTERNAL_IP = 200
+    EXTERNAL_IP_MASK = 24
 
 
 

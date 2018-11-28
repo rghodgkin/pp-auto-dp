@@ -1,0 +1,10 @@
+---
+ - name: Configure route entry specified
+   hosts: all
+   gather_facts: false
+   become: True
+
+   tasks:
+   - name: Execute route add command
+     command: route add -net {{ cidr }} gw {{ gateway_ip }}
+

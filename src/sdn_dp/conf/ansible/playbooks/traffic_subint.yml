@@ -1,0 +1,21 @@
+---
+ - name: Configure subinterface + IP address for external traffic gen
+   hosts: all
+   gather_facts: false
+   become: True
+
+   tasks:
+   - name: Add 802.1q module prior to configuration
+     modprobe:
+       name: 8021q
+       state: present
+
+   - name: configure subinterface
+     command: vconfig add {{ traffic_engine_int }} {{ segment_id }}
+
+   - name: configure ip address on subinterface
+     command: ip address add {{ traffic_engine_int_ip }} dev {{ traffic_engine_int }}.{{ segment_id }}
+
+   - name: set link on interface to up
+     command: ip link set dev {{ traffic_engine_int }}.{{ segment_id }} up
+

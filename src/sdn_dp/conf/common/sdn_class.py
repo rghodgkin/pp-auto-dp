@@ -2,9 +2,12 @@
 # encoding: utf-8
 
 import logging
+import subprocess
 import yaml
 import time
 import pdb
+import sdn_dp.conf.common.utils as utils
+import sdn_dp.conf.common.ansible_utils as ansible_utils
 from sdn_dp.conf.common.constants import OSCLOUDIMAGE
 from sdn_dp.conf.common.constants import OSCLOUDFLAVOR
 
@@ -74,6 +77,7 @@ class SdnEdgeParent(object):
                    'port_name':'', 'port_obj':''}}, 
                    'server':{'server_obj':''}}
         self.deploy_state = 0
+        self.traffic_state = 0
 
     def destroy(self):
         server = self.os['server']['server_obj'] 
@@ -128,9 +132,6 @@ class SdnEdgeCloudObj(SdnEdgeParent):
         self.os['networks']['provider'] = {'net_obj':'', 'port_obj':''}
 
     def deploy(self):
-        # Needs to do following: 1) get port from tenant net (self.os.tenant_net_id)
-        #                        2) get port from provider net (self.os.provider_net_id)
-        #                        3) Create server instance with ports
         if self.deploy_state == 0:
             
             nova = self.common.os['clients']['nova']['client']
@@ -148,28 +149,6 @@ class SdnEdgeCloudObj(SdnEdgeParent):
                                            availability_zone=self.topo['engine'])
 
             self.os['server']['server_obj'] = instance
-            # Pull the 'tenant' and 'provider' IP address and MAC's and store into
-            #   self.topo.tenant_ip, tenant_mac, provider_ip and provider_mac
-            # The below should be easiest way, but for some reason comes back empty
-            #  no longer how long wait period is set for. 
-            #instance_net_info = instance.addresses
-            #if instance_net_info == {}:
-            #    print("*********FAIL*********")
-            #for loop in range(10):
-            #    time.sleep(2)
-            #    print("Loop cntr =: %s" % loop)
-            #    instance_net_info = instance.addresses
-            #    if len(instance_net_info) == 2:
-            #        break
-            #self.topo['tenant_ip'] = instance_net_info[self.topo\
-            #                         ['tenant_net_name']][0]['addr']
-            #self.topo['tenant_mac'] = instance_net_info[self.topo\
-            #                         ['tenant_net_name']][0]['OS-EXT-IPS-MAC:mac_addr']
-            #self.topo['provider_ip'] = instance_net_info[self.topo\
-            #                         ['provider_net_name']][0]['addr']
-            #self.topo['provider_mac'] = instance_net_info\
-            #                         [self.topo['provider_net_name']][0]['OS-EXT-IPS-MAC:mac_addr']
-            # The below is a backup method for getting addr and mac
             for loop in range(10):
                 time.sleep(2)
                 print("Loop cntr =: %s" % loop)
@@ -189,6 +168,46 @@ class SdnEdgeCloudObj(SdnEdgeParent):
             logging.info("SdnNetrouterCloudObj: deploy of %s failed b/c \
                           already in deployed state" % selfname)
             return 0 
+
+    def traffic_start(self, dest_name, **kwargs):
+        if self.traffic_state == 0:
+        # If traffic_state = 0 then we need to configure the subinterface
+        #   and routes on each gateway device for reachability
+          if self.topo['traffic_mode'] == "external":
+            # The below will configure traffic requirements for all
+            #  gateways in same network as this device - thus traffic
+            #  can be sent anywhere
+            ansible_utils.ansible_traffic_subint(self)
+
+            # Configure routes on local customer traffic device to reach
+            #   gateway; on all remote devices insert return route
+            #my_name = self.name
+            #net_match = re.search('cloud-([0-9]+)-', my_name)
+            #my_net_index = net_match.group(1)
+            #remote_net_list = []
+            #local_net = self.topo['provider_net']
+            #for gw in common.sdn[my_net_index].edge_list:
+            #  if gw.name != my_name: 
+            #    if gw.topo['type'] == 'cloud':
+            #      remote_net_list.append(gw.topo['provider_net']) 
+            #      remote_traffic_ip = gw.topo['traffic_engine_ip']
+            #      remote_traffic_gw = gw.topo['provider_ip']
+            #      # Add route to remote traffic gen for return traffic
+            #      ssh_cmd = "route add %s gw %s" % \
+            #                 (self.topo['provider_net'], remote_traffic_gw) 
+            #      utils.ssh_exec(remote_traffic_ip, ssh_cmd)
+            #    elif gw.topo['type'] == 'site':
+            #      pass
+            #    elif gw.topo['type'] == 'mobile':
+            #      pass
+            # Add local routes to all remote provider networks
+            #for net in remote_net_list:
+            #    ssh_cmd = "route add %s gw %s" % \
+            #               (net, self.topo['provider_ip'])
+            #    utils.ssh_exec(self.topo['traffic_engine_ip'], ssh_cmd)
+            ansible_utils.ansible_traffic_routes(self)
+
+        # Start background iperf3 instance 
 
 
 class SdnEdgeSiteCloudObj(SdnEdgeParent):
