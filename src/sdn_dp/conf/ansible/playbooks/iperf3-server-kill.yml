@@ -1,0 +1,22 @@
+---
+ - name: Kill an iperf3 process via regex on port 
+   hosts: all
+   gather_facts: false
+   become: True
+
+   vars:
+     traffic_port: 5201
+
+   tasks:
+   - name: store all iperf3 processes
+     shell: ps -eaf | grep iperf3 | grep '\-p *{{ traffic_port }}'
+     register: ps_output
+     ignore_errors: yes
+
+   - set_fact: 
+       pidvalue: "{{ ps_output.stdout | regex_replace('^[a-zA-Z0-9]+ +([0-9]+).*-B.*', '\\1') }}"
+       when: ps_output.stdout != ""
+
+   - name: kill task in pidvalue
+     shell: "kill {{ pidvalue }}"
+     when: pidvalue != ""

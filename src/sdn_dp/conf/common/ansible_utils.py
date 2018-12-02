@@ -12,17 +12,18 @@ def ansible_deploy_lxd_ospf(common, cloud_obj):
     """
 
     try:
-        server_obj = cloud_obj.os['server']['server_obj']
+        #server_obj = cloud_obj.os['server']['server_obj']
         # The line below is a workaround to refresh the 'server' object b/c
         #  it continually comes back with ._info data only half defined
-        dir(server_obj)
-        for loop in range(10):
-            if server_obj._info.has_key('OS-EXT-SRV-ATTR:instance_name') == False:
-                time.sleep(2)
-                print("Loop cntr =: %s" % loop)
-            else:
-                lxd_inst_name = str(server_obj._info['OS-EXT-SRV-ATTR:instance_name'])
-                break
+        #dir(server_obj)
+        #for loop in range(10):
+        #    if server_obj._info.has_key('OS-EXT-SRV-ATTR:instance_name') == False:
+        #        time.sleep(2)
+        #        print("Loop cntr =: %s" % loop)
+        #    else:
+        #        lxd_inst_name = str(server_obj._info['OS-EXT-SRV-ATTR:instance_name'])
+        #        break
+        lxd_inst_name = cloud_obj.topo['instance_name']
         engine_ip = common.config['devices']['engines'][cloud_obj.topo['engine']]
         edge_type = cloud_obj.topo['type']
         if edge_type == "cloud":
@@ -38,6 +39,7 @@ def ansible_deploy_lxd_ospf(common, cloud_obj):
         return 1, out
     except:
         logging.error("Error: ansible_deploy_ospf_lxd: failed to provision properly")
+        pdb.set_trace()
         return 0, {}
 
 
@@ -86,7 +88,6 @@ def ansible_traffic_routes(cloud_obj):
     '''
 
     try:
-      pdb.set_trace()
       my_name = cloud_obj.name
       net_match = re.search('cloud-([0-9]+)-', my_name)
       my_net_index = int(net_match.group(1)) - 1

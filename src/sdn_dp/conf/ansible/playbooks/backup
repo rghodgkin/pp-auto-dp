@@ -1,0 +1,33 @@
+---
+ - name: Execute the given command and provide stdout 
+   hosts: all
+   gather_facts: false
+   become: True
+
+   vars:
+     traffic_time = 10
+     traffic_prot = 'tcp'
+     traffic_bw = '1G'
+     traffic_port = 5201
+
+   tasks:
+   - name: execute iperf3 client command
+     raw: iperf3 -f m -c {{ address }} {{ traffic_port }} -t {{ traffic_time }}
+     when: '{{ traffic_prot }}' == 'tcp'
+     register: command_output 
+
+   - name: execute iperf3 client command
+     raw: iperf3 -f m -c {{ address }} {{ traffic_port }} -t {{ traffic_time }} -u -b {{ traffic_bw }} 
+     when: '{{ traffic_prot }}' == 'udp' 
+     register: command_output
+
+   - debug:
+       var: command_output.stdout
+     #   - debug: var=item.stdout
+     #with_items: out.results
+     #
+
+       #- debug:
+       #msg: "{{ item.name }}"
+       #with_items: "{{ command_output.msg_output }}"
+

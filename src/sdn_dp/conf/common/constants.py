@@ -5,23 +5,26 @@ class TopoTemps(object):
     network = {'name':'', 'tenant_net_name':'', 'tenant_cidr':'', 'edge_list':[], \
             'os_data':{}}
     netrouter = {'type':'netrouter', 'name':'', 'engine':'', 'tenant_net_name':'', \
-            'tenant_net':'', 'tenant_ip':'', 'tenant_mac': '', 'os_data':{}}
+            'tenant_net':'', 'tenant_ip':'', 'tenant_mac': '', 'os_data':{}, \
+            'instance_name':''}
     #network = {'name':'', 'sdn_description':'', 'sdn_account': '', \
     #           'sdn_network_type': '', 'sdn_zone': '', 'edge_list':[]}
     cloud = {'name':'', 'cloud_provider':'', 'engine':'', 'physical_net':'', \
             'segment_id':'', 'tenant_net_name':'', 'tenant_net':'', 'tenant_ip':'', \
             'tenant_mac':'', 'provider_net_name': '', 'provider_net':'', \
-            'provider_ip':'', 'provider_mac':'', 'traffic_state':0, \
-            'os_data':{}, 'type':'cloud'}
+            'provider_ip':'', 'provider_mac':'', \
+            'os_data':{}, 'type':'cloud', 'instance_name':''}
     #cloud = {'name':'', 'sdn_description':'', 'sdn_network':'', \
     #         'sdn_cloud_provider':'', 'aws_cloud_region':'', \
     #         'sdn_cloud_location':'', 'aws_cloud_account':'', \
     #         'IPv4_CIDR_block':'', 'type':'cloud'} 
     site = {'type':'site', 'name':'', 'engine':'', 'tenant_net_name':'', \
-            'tenant_net':'', 'tenant_ip':'', 'tenant_mac':'', 'vpn_net':'', 'os_data':{}}
+            'tenant_net':'', 'tenant_ip':'', 'tenant_mac':'', 'vpn_net':'', \
+            'os_data':{}, 'instance_name':''}
     #site = {'name':'', 'sdn_description':'', \
     #        'sdn_network':'', 'sdn_zone':'', 'type':'site'}
-    mobile = {'type':'mobile', 'name':'', 'engine':'', 'mobile_net':'', 'os_data':{}}
+    mobile = {'type':'mobile', 'name':'', 'engine':'', 'mobile_net':'', \
+              'os_data':{}, 'instance_name':''}
     #mobile = {'name':'', 'sdn_description':'', \
     #        'sdn_network':'', 'sdn_zone':'', 'type':'mobile'}
 
@@ -72,6 +75,7 @@ class TRAFFICINFO(object):
     # The below will configure external traffic gen ints with x.x.x.200/24
     EXTERNAL_IP = 200
     EXTERNAL_IP_MASK = 24
+    TRAFFIC_PASS_PERCENT = float(99)
 
 
 

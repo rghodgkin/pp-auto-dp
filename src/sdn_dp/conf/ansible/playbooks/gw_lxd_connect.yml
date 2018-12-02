@@ -1,0 +1,27 @@
+---
+ - name: Execute command on LXD container and return output
+   hosts: all
+   gather_facts: false
+   become: True
+
+   tasks:
+   - name: add LXD container host
+     add_host:
+        hostname: addedhost
+        ansible_host: "{{ lxd_host }}:{{ lxd_container }}"
+        ansible_connection: lxd
+
+   vars:
+     lxd_host: lxdhost
+     lxd_container: conthost
+
+ - name: Execute
+   hosts: addedhost
+
+   tasks:
+   - name: test
+     shell: uname -a
+     register: out
+
+   - debug: var=out
+

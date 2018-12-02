@@ -74,11 +74,21 @@ class COMMON(object):
         This method will parse config dict and instantiate all network
           objects along with sub edge objects inside (via method calls)
         '''
-        output = sdn_utils.gen_sdn_net_data(self.topo, self)
-        if output[0]:
-            self.sdn = output[1]
-        else:
-            pytest.exit(msg="Error: gen_sdn_data generation failed - exiting")
+
+        try:
+          topo_net_list = self.topo['network']
+          for net_item in topo_net_list:
+              x = sdn_class.SdnNetObj(net_item, self)
+              self.sdn.append(x)
+
+        except:
+          logging.error("Error: gen_sdn_data method did not complete properly")
+
+        #output = sdn_utils.gen_sdn_net_data(self.topo, self)
+        #if output[0]:
+        #    self.sdn = output[1]
+        #else:
+        #    pytest.exit(msg="Error: gen_sdn_data generation failed - exiting")
  
     def gen_os_infra(self):
         '''

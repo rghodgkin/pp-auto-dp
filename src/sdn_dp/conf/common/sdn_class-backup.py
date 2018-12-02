@@ -8,7 +8,6 @@ import time
 import re
 import pdb
 import sdn_dp.conf.common.utils as utils
-import sdn_dp.conf.common.sdn_utils as sdn_utils
 import sdn_dp.conf.common.ansible_utils as ansible_utils
 from sdn_dp.conf.common.constants import SDNCIDR
 from sdn_dp.conf.common.constants import OSCLOUDIMAGE
@@ -23,8 +22,6 @@ class SdnNetObj(object):
         self.tenant_net_obj = ""
         self.tenant_net_subnet_obj = ""
         self.edge_list = []
-        self.edge_name_list = {'netrouter':{}, 'cloud':{}, 'site':{}, \
-                                'mobile':{}}
         self.edge_netrouter_list = []
         self.edge_cloud_list = []
         self.edge_site_list = []
@@ -46,28 +43,24 @@ class SdnNetObj(object):
         print("I'm inside create_edge_inst: %s, %s" % (type, topo_dict['name']))
 
         if type == "netrouter":
-            tmp_obj = SdnNetrouterCloudObj(topo_dict, self.common, self)
+            tmp_obj = SdnNetrouterCloudObj(topo_dict, self.common)
             self.edge_netrouter_list.append(tmp_obj)
             self.edge_list.append(tmp_obj)
-            self.edge_name_list['netrouter'][topo_dict['name']] = tmp_obj
 
         elif type == "cloud":
-            tmp_obj = SdnEdgeCloudObj(topo_dict, self.common, self)
+            tmp_obj = SdnEdgeCloudObj(topo_dict, self.common)
             self.edge_cloud_list.append(tmp_obj) 
             self.edge_list.append(tmp_obj)
-            self.edge_name_list['cloud'][topo_dict['name']] = tmp_obj
 
         elif type == "site":
-            tmp_obj = SdnEdgeSiteCloudObj(topo_dict, self.common, self)
+            tmp_obj = SdnEdgeSiteCloudObj(topo_dict, self.common)
             self.edge_site_list.append(tmp_obj) 
             self.edge_list.append(tmp_obj)
-            self.edge_name_list['site'][topo_dict['name']] = tmp_obj
 
         elif type == "mobile":
-            tmp_obj = SdnEdgeMobileCloudObj(topo_dict, self.common, self)
+            tmp_obj = SdnEdgeMobileCloudObj(topo_dict, self.common)
             self.edge_mobile_list.append(tmp_obj)
             self.edge_list.append(tmp_obj)
-            self.edge_name_list['mobile'][topo_dict['name']] = tmp_obj
 
     def list_edge_inst(self):
         '''
@@ -78,11 +71,10 @@ class SdnNetObj(object):
         
 
 class SdnEdgeParent(object):
-    def __init__(self, topo_dict, common, net_obj):
+    def __init__(self, topo_dict, common):
         self.topo = topo_dict.copy()
         self.name = self.topo['name']
         self.common = common
-        self.network = net_obj
         self.os = {'networks':{'tenant':{'net_obj':'', 'subnet_obj':'', \
                    'port_name':'', 'port_obj':''}}, 
                    'server':{'server_obj':''}}
@@ -98,8 +90,8 @@ class SdnEdgeParent(object):
 
 
 class SdnNetrouterCloudObj(SdnEdgeParent):
-    def __init__(self, topo_dict, common, net_obj):
-        SdnEdgeParent.__init__(self, topo_dict, common, net_obj)
+    def __init__(self, topo_dict, common):
+        SdnEdgeParent.__init__(self, topo_dict, common)
 
     def deploy(self):
         if self.deploy_state == 0:
@@ -136,8 +128,8 @@ class SdnNetrouterCloudObj(SdnEdgeParent):
 
 
 class SdnEdgeCloudObj(SdnEdgeParent):
-    def __init__(self, topo_dict, common, net_obj):
-        SdnEdgeParent.__init__(self, topo_dict, common, net_obj)
+    def __init__(self, topo_dict, common):
+        SdnEdgeParent.__init__(self, topo_dict, common)
         # Initialize cloud specific Openstack dict keys
         self.os['networks']['provider'] = {'net_obj':'', 'port_obj':''}
 
@@ -201,7 +193,7 @@ class SdnEdgeCloudObj(SdnEdgeParent):
                           already in deployed state" % selfname)
             return 0 
 
-    def traffic_run(self, dest_name, **kwargs):
+    def traffic_start(self, dest_name, **kwargs):
         if self.traffic_state == 0:
         # If traffic_state = 0 then we need to configure the subinterface
         #   and routes on each gateway device for reachability
@@ -214,22 +206,20 @@ class SdnEdgeCloudObj(SdnEdgeParent):
             ansible_utils.ansible_traffic_routes(self)
 
         # Start background iperf3 instance 
-        dst_obj = self.network.edge_name_list['cloud'][dest_name]
-        sdn_utils.traffic_run_handler(self, dst_obj, **kwargs)
-        #pdb.set_trace()
+        pdb.set_trace()
 
 
 class SdnEdgeSiteCloudObj(SdnEdgeParent):
-    def __init__(self, topo_dict, common, net_obj):
-        SdnEdgeParent.__init__(self, topo_dict, common, net_obj) 
+    def __init__(self, topo_dict, common):
+        SdnEdgeParent.__init__(self, topo_dict, common) 
 
     def deploy(self):
         pass
 
 
 class SdnEdgeMobileCloudObj(SdnEdgeParent):
-    def __init__(self, topo_dict, common, net_obj):
-        SdnEdgeParent.__init__(self, topo_dict, common, net_obj)
+    def __init__(self, topo_dict, common):
+        SdnEdgeParent.__init__(self, topo_dict, common)
 
     def deploy(self):
         pass

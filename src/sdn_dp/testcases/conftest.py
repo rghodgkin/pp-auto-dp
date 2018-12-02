@@ -1,6 +1,7 @@
 import pytest
 import pdb
 import logging
+import time
 import re
 import sdn_dp.conf.common.ansible_utils as ansible_utils
 import sdn_dp.conf.common.utils as utils
@@ -51,6 +52,11 @@ def dp_setup(common):
             for mgw in net.edge_mobile_list:
                 mgw.deploy()
 
+        logging.info("Sleeping 10 seconds after deploy to let all containers \
+                      get to active state")
+        time.sleep(10)
+
+
         # TEMPORARY
         # The below is used to configure OSPF within coud network
         #  until we get true BGP support in place
@@ -63,6 +69,7 @@ def dp_setup(common):
                 ansible_utils.ansible_deploy_lxd_ospf(common, sgw) 
             for mgw in net.edge_mobile_list:
                 ansible_utils.ansible_deploy_lxd_ospf(common, mgw) 
+
 
         # The below configures traffic info within common.sdn cloud
         #  objects.  Configures IP addresses and routes as per confi
