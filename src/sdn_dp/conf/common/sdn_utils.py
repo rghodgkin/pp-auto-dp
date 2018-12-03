@@ -167,6 +167,7 @@ def traffic_run_handler(src_obj, dst_obj, **kwargs):
            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
                           --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
            out = subprocess.check_output(ansible_cmd, shell=True)
+           time.sleep(2)
   
            # Execute ansible playbook to start client traffic
            script = 'iperf3-client-tcp.yml'
@@ -219,7 +220,7 @@ def traffic_run_handler(src_obj, dst_obj, **kwargs):
                           'sum_rev_rcvd':sum_rev_rcvd}
 
          except:
-             info.error("Error: traffic_run_handler failed to execute properly")
+             logging.error("Error: traffic_run_handler failed to execute properly")
              pdb.set_trace()
              return 0, {}
 

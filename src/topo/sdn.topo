@@ -14,4 +14,4 @@ sdn:
         engine:
         - e2
   other:
-    traffic: external
+    traffic: os

@@ -42,6 +42,29 @@ def ansible_deploy_lxd_ospf(common, cloud_obj):
         pdb.set_trace()
         return 0, {}
 
+def ansible_deploy_lxd_traffic_ospf(common, cloud_obj):
+    """
+    This function executes Ansible playbook for configure of basic OSPF
+      for the traffic instance attached to a gateway
+    """
+
+    try:
+        lxd_inst_name = cloud_obj.topo['traffic_instance_name']
+        engine_ip = cloud_obj.topo['traffic_engine_ip']
+        edge_type = cloud_obj.topo['type']
+        script = 'lxd-ospf-dual.yml'
+
+        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                       --extra-vars "container_name=%s"' % \
+                       (engine_ip, script, lxd_inst_name)
+        out = subprocess.check_output(ansible_cmd, shell=True)
+
+        return 1, out
+    except:
+        logging.error("Error: ansible_deploy_lxd_traffic_ospf: failed to provision properly")
+        pdb.set_trace()
+        return 0, {}
+
 
 def ansible_traffic_subint(cloud_obj):
     '''
@@ -78,6 +101,7 @@ def ansible_traffic_subint(cloud_obj):
 
     except:
         logging.error("Error: ansible_traffic_subint: failed to provision properly")
+        pdb.set_trace()
         return 0, {}
 
 

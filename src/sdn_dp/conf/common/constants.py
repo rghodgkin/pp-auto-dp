@@ -64,12 +64,14 @@ class OSCLOUDIMAGE(object):
     cloud = 'ubuntu-18.04-vpn'
     site = 'ubuntu-18.04-vpn'
     mobile = 'ubuntu-18.04-vpn'
+    traffic = 'ubuntu-18.04-vpn'
 
 class OSCLOUDFLAVOR(object):
     netrouter = 'c1.small'
     cloud = 'ubuntu-18.04-vpn'
     site = 'ubuntu-18.04-vpn'
     mobile = 'ubuntu-18.04-vpn'
+    traffic = 'c1.small'
 
 class TRAFFICINFO(object):
     # The below will configure external traffic gen ints with x.x.x.200/24

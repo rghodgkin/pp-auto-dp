@@ -186,11 +186,6 @@ class SdnEdgeCloudObj(SdnEdgeParent):
                     self.topo['provider_ip'] = ip_tmp 
                     self.topo['provider_mac'] = instance_net_info[cntr].mac_addr
 
-            # The below was replaced b/c int ordering from OS cannot be guaranteed
-            #self.topo['tenant_ip'] = instance_net_info[0].fixed_ips[0]['ip_address']
-            #self.topo['tenant_mac'] = instance_net_info[0].mac_addr
-            #self.topo['provider_ip'] = instance_net_info[1].fixed_ips[0]['ip_address']
-            #self.topo['provider_mac'] = instance_net_info[1].mac_addr
 
             self.deploy_state = 1
    
