@@ -12,8 +12,10 @@ def os_create_tenant_net(neutron, name, **kwargs):
     '''
     
     try:
+        
         if kwargs.has_key('port_security'): 
-            if kwargs['port_security'] == 1:
+
+            if str(kwargs['port_security']).lower() == "true":
                 ps = 'True' 
             else:
                 ps = 'False'
@@ -27,6 +29,7 @@ def os_create_tenant_net(neutron, name, **kwargs):
             'port_security_enabled': ps,
             'shared': 'True'
         }
+
         out = neutron.create_network({'network':body}) 
         return 1, out
 

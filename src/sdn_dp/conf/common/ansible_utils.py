@@ -26,6 +26,7 @@ def ansible_deploy_lxd_ospf(common, cloud_obj):
         lxd_inst_name = cloud_obj.topo['instance_name']
         engine_ip = common.config['devices']['engines'][cloud_obj.topo['engine']]
         edge_type = cloud_obj.topo['type']
+
         if edge_type == "cloud":
             script = 'lxd-ospf-dual.yml'
         else:
@@ -34,6 +35,7 @@ def ansible_deploy_lxd_ospf(common, cloud_obj):
         ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
                        --extra-vars "container_name=%s"' % \
                        (engine_ip, script, lxd_inst_name)
+
         out = subprocess.check_output(ansible_cmd, shell=True)
 
         return 1, out
@@ -52,16 +54,18 @@ def ansible_deploy_lxd_traffic_ospf(common, cloud_obj):
         lxd_inst_name = cloud_obj.topo['traffic_instance_name']
         engine_ip = cloud_obj.topo['traffic_engine_ip']
         edge_type = cloud_obj.topo['type']
-        script = 'lxd-ospf-dual.yml'
+        script = 'lxd-ospf-single.yml'
 
         ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
                        --extra-vars "container_name=%s"' % \
                        (engine_ip, script, lxd_inst_name)
+
         out = subprocess.check_output(ansible_cmd, shell=True)
 
         return 1, out
     except:
         logging.error("Error: ansible_deploy_lxd_traffic_ospf: failed to provision properly")
+        print("Command is: out = subprocess.check_output(ansible_cmd, shell=True) ")
         pdb.set_trace()
         return 0, {}
 

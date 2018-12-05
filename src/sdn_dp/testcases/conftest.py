@@ -62,9 +62,10 @@ def dp_setup(common):
         # TEMPORARY
         # The below is used to configure OSPF within coud network
         #  until we get true BGP support in place
+        logging.info("Setting up OSPF routing for all gateways")
         for net in common.sdn:
             for nrtr in net.edge_netrouter_list:
-                ansbile_utils.ansible_deploy_lxd_ospf(common, nrtr) 
+                ansible_utils.ansible_deploy_lxd_ospf(common, nrtr) 
             for cgw in net.edge_cloud_list:
                 ansible_utils.ansible_deploy_lxd_ospf(common, cgw) 
             for sgw in net.edge_site_list:
@@ -72,9 +73,13 @@ def dp_setup(common):
             for mgw in net.edge_mobile_list:
                 ansible_utils.ansible_deploy_lxd_ospf(common, mgw) 
 
+        logging.info("OSPF routing setup completed for all gateways")
+
 
         # The below configures traffic info within common.sdn cloud
         #  objects.  Configures IP addresses and routes as per confi
+        logging.info("Configuring edge traffic devices...")
+
         traffic_mode = common.topo['other']['traffic'].lower()
         logging.info("Setting up edge traffic, mode is: %s" %
                       common.topo['other']['traffic'])
@@ -88,7 +93,6 @@ def dp_setup(common):
           flavor = nova.flavors.find(name=flavor_name)
           for net in common.sdn:
               for edge_item in net.edge_cloud_list:
-                pdb.set_trace()
                 c_type = edge_item.topo['type']
                 c_name = '%s-traffic' % edge_item.topo['name']
 
@@ -125,8 +129,14 @@ def dp_setup(common):
                 edge_item.topo['traffic_engine_int_ip'] =  instance_net_info[0].fixed_ips[0]['ip_address']
                 edge_item.topo['traffic_engine_int_mac'] = instance_net_info[0].mac_addr
 
-                # Configure OSPF on LXD traffic instance
-                ansible_utils.ansible_deploy_lxd_traffic_ospf(common, edge_item)
+          logging.info("Sleeping 20 seconds to allow for all traffic containers to come up...")
+          time.sleep(20)
+          # Configure OSPF on LXD traffic instance
+          for net in common.sdn:
+              for edge_item in net.edge_cloud_list:
+                c_type = edge_item.topo['type']
+                if c_type == 'cloud':
+                  ansible_utils.ansible_deploy_lxd_traffic_ospf(common, edge_item)
                 
   
         else:

@@ -110,10 +110,22 @@ class SdnNetrouterCloudObj(SdnEdgeParent):
             flavor = nova.flavors.find(name=flavor_name)
             net_tenant = self.os['networks']['tenant']['net_obj']['network']['id']
             nics = [{'net-id': net_tenant, 'name': 'tenant-port'}]
-            instance = nova.servers.create(name=self.name, image=image, \
-                                               flavor=flavor, nics=nics, \
-                                               availability_zone=self.topo['engine'])
+            # Openstack has some inconsistency where the instance ID does not always
+            #   get populated in the object.  If not present kill and respawn
+            for respawn in range(5):
+                instance = nova.servers.create(name=self.name, image=image, \
+                                           flavor=flavor, nics=nics, \
+                                           availability_zone=self.topo['engine'])
+                time.sleep(1)
+                dir(instance)
+                if instance._info['OS-EXT-SRV-ATTR:instance_name'] != '':
+                    break
+                else:
+                    instance.delete()
+                    time.sleep(5)
+
             self.os['server']['server_obj'] = instance
+            self.topo['instance_name'] = instance._info['OS-EXT-SRV-ATTR:instance_name']
 
             for loop in range(10):
                 time.sleep(2)
@@ -208,9 +220,18 @@ class SdnEdgeCloudObj(SdnEdgeParent):
             ansible_utils.ansible_traffic_subint(self)
             ansible_utils.ansible_traffic_routes(self)
 
+          elif self.topo['traffic_mode'] == "os":
+            pass 
+
         # Start background iperf3 instance 
         dst_obj = self.network.edge_name_list['cloud'][dest_name]
-        sdn_utils.traffic_run_handler(self, dst_obj, **kwargs)
+        output = sdn_utils.traffic_run_handler(self, dst_obj, **kwargs)[0] 
+        if output == '1':
+            logging.info("Traffic for %s -> %s passed" % (self.name, dest_name))
+            return 1
+        else:
+            logging.info("Traffic for %s -> %s failed" % (self.name, dest_name))
+            return 0
         #pdb.set_trace()
 
 

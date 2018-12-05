@@ -1,7 +1,7 @@
 sdn:
   name: AUTO
   network:
-    count: 1 
+    count: 2
     edge_list:
       - type: cloud
         cloud_provider: aws
@@ -14,4 +14,4 @@ sdn:
         engine:
         - e2
   other:
-    traffic: external
+    traffic: os

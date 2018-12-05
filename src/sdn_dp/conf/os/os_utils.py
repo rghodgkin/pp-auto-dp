@@ -111,7 +111,7 @@ def config_os_tenant_networks(self):
             # If subnet exists with same name delete the subnet
             #  before creating a new with same name
             find = neutron.list_networks(name=net_name)
-
+ 
             for fnet in find['networks']:
                 neutron.delete_network(fnet['id']) 
                 logging.info("config_os_networks: Delete existing network \

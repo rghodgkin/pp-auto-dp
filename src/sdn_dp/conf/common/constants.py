@@ -64,7 +64,7 @@ class OSCLOUDIMAGE(object):
     cloud = 'ubuntu-18.04-vpn'
     site = 'ubuntu-18.04-vpn'
     mobile = 'ubuntu-18.04-vpn'
-    traffic = 'ubuntu-18.04-vpn'
+    traffic = 'ubuntu-18.04-traffic'
 
 class OSCLOUDFLAVOR(object):
     netrouter = 'c1.small'

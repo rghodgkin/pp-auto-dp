@@ -1,0 +1,15 @@
+---
+ - name: Execute the given command and provide stdout 
+   hosts: instance-0000039c
+   gather_facts: false
+
+   tasks:
+   - name: test
+     delegate_to: engine2
+     lxd_container:
+
+     raw: uname -a
+     register: out
+
+   - debug: var=out
+

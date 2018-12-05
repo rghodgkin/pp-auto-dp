@@ -1,0 +1,17 @@
+---
+
+ - name: Execute the given command and provide stdout
+   hosts: all
+   gather_facts: false
+   become: true
+
+   vars:
+     traffic_port: 5201
+
+   tasks:
+   - name: lxd exec execute iperf3 server command
+     raw: lxc exec {{ traffic_instance_name }} -- iperf3 -B {{ traffic_engine_int_ip }} -p {{ traffic_port }} -s -D
+     register: command_output
+
+   - debug:
+       var: command_output
