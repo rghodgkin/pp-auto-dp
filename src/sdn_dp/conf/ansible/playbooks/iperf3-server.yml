@@ -2,15 +2,24 @@
  - name: Execute the given command and provide stdout 
    hosts: all
    gather_facts: false
-   become: true
+   become: true 
 
    vars:
      traffic_port: 5201
 
    tasks:
+   - name: execute ping to fill arp cache
+     shell: ping -c 2 {{ gateway }}
+
    - name: execute iperf3 server command
-     raw: iperf3 -B {{ address }} -p {{ traffic_port }} -s -D
+     shell: iperf3 -B {{ address }} -p {{ traffic_port }} -s > /tmp/tmp-{{ address }}-{{ traffic_port }}.txt & 
+     async: 10000
+     poll: 0
      register: command_output 
+     ignore_errors: true
+
+   - name: execute ping to fill arp cache
+     shell: ping -c 2 {{ gateway }}
 
    - debug:
        var: command_output

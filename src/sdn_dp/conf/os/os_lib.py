@@ -112,7 +112,7 @@ def os_create_subnet(neutron, name, net_id, cidr, **kwargs):
 
         if kwargs.has_key('gateway_ip'):
             body['gateway_ip'] = kwargs['gateway_ip']
-
+        
         out = neutron.create_subnet(body=body_subnet)
         return 1, out
 

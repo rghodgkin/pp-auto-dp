@@ -67,6 +67,7 @@ def dp_setup(common):
             for nrtr in net.edge_netrouter_list:
                 ansible_utils.ansible_deploy_lxd_ospf(common, nrtr) 
             for cgw in net.edge_cloud_list:
+                logging.info("Deploying OSPF for %s" % cgw.name)
                 ansible_utils.ansible_deploy_lxd_ospf(common, cgw) 
             for sgw in net.edge_site_list:
                 ansible_utils.ansible_deploy_lxd_ospf(common, sgw) 
@@ -171,6 +172,9 @@ def dp_setup(common):
                 elif c_type == 'mobile':
                   edge_item.topo.traffic_mode = \
                             traffic_mode
+
+        logging.info("Sleeping for 60 seconds to allow for protocol sync...")
+        time.sleep(60)
 
         dss.setup_status = 1
 

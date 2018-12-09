@@ -1,0 +1,58 @@
+---
+#  This playbook starts iperf3 background traffic for both send and reverse
+#  directions.  Returns stdout with SEND_PID=x and REV_PID=y
+#
+
+ - name: Execute the given command and provide stdout 
+   hosts: all
+   gather_facts: false
+   become: false 
+
+   vars:
+     traffic_time: 10000
+     traffic_prot: 'tcp'
+     traffic_bw: '1G'
+     traffic_send_port: 5201
+     traffic_rev_port: 5202
+
+   tasks:
+   - name: ping datapath to prime arp cache
+     shell: ping -c 3 {{ address }}
+
+   - name: execute iperf3 client command - SEND
+     shell: "iperf3 -f m -c {{ address }} -p {{ traffic_send_port }} -t {{ traffic_time }}" 
+     async: "{{ traffic_time }}"
+     poll: 0
+     register: command_output_c2s_tcp
+     ignore_errors: true
+
+   - debug: var=command_output_c2s_tcp
+
+   - set_fact:
+       send_pid: |
+               {{ command_output_c2s_tcp |
+                  regex_replace('\[[0-9]+\] +([0-9]+)', '\\1') }}
+     when: command_output_c2s_tcp is succeeded
+
+   - name: execute iperf3 client command - REV 
+     shell: "iperf3 -f m -c {{ address }} -p {{ traffic_rev_port }} -t {{ traffic_time }} -R"
+     async: "{{ traffic_time }}"
+     poll: 0
+     register: command_output_c2s_rev_tcp
+     ignore_errors: true
+
+   - debug: var=command_output_c2s_rev_tcp
+
+   - set_fact: 
+       rev_pid: |
+               {{ command_output_c2s_rev_tcp |
+                  regex_replace('\[[0-9]+\] +([0-9]+)', '\\1') }}
+     when: command_output_c2s_rev_tcp is succeeded
+
+   - debug:
+       msg: "SEND_PID={{ send_pid }}, REV_PID={{ rev_pid }}"
+     when:
+         - command_output_c2s_tcp is succeeded
+    
+
+

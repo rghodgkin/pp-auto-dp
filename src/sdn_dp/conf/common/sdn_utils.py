@@ -140,8 +140,10 @@ def gen_sdn_topo(tv, common):
 def traffic_run_handler(src_obj, dst_obj, **kwargs):
     # src vars below represent source traffic generator
     src_engine_ip = src_obj.topo['traffic_engine_ip']
+    src_engine_gw = src_obj.topo['provider_ip']
     src_dest_ip = str(re.search('([0-9.]+)/*[0-9]*', \
          dst_obj.topo['traffic_engine_int_ip']).group(1))
+    src_dest_gw = dst_obj.topo['provider_ip']
     dst_engine_ip = dst_obj.topo['traffic_engine_ip']
 
     extra_vars = ''
@@ -160,67 +162,93 @@ def traffic_run_handler(src_obj, dst_obj, **kwargs):
 
     if src_obj.topo['traffic_mode'] == 'external' and \
            dst_obj.topo['traffic_mode'] == 'external':
-      
+      if src_obj.traffic_running == 0:  
         try:
-          # Execute ansible playbook to start iperf server
-          script = 'iperf3-server.yml'
-          extra_vars = 'address=%s traffic_port=%s' % (src_dest_ip, traffic_port)
-          ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+
+          # Run short traffic set below to ensure datapath
+          prime_success = 0
+          for loop in range(5):
+              logging.info("Running prime traffic procedure...")
+              # Execute ansible playbook to start iperf server
+              script = 'iperf3-server.yml'
+              extra_vars = 'address=%s traffic_port=%s gateway=%s' \
+                        % (src_dest_ip, traffic_port, src_dest_gw)
+              ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
                          --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
-          out = subprocess.check_output(ansible_cmd, shell=True)
-          time.sleep(2)
- 
-          # Execute ansible playbook to start client traffic
-          script = 'iperf3-client-tcp.yml'
-          extra_vars = 'address=%s traffic_time=%s traffic_port=%s \
-                        traffic_bw=%s' % (src_dest_ip, \
-                        traffic_time, traffic_port, traffic_bw)
-          ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-                         --extra-vars "%s"' % (src_engine_ip, script, extra_vars)
-          out_result = subprocess.check_output(ansible_cmd, shell=True)
-          out_result = subprocess.check_output(ansible_cmd, shell=True)
-          time.sleep(2)
- 
-          # Execute ansible playbook to kill iperf server process
-          script = 'iperf3-server-kill.yml' 
-          extra_vars = 'traffic_port=%s' % (traffic_port)
-          ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-                         --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
-          out = subprocess.check_output(ansible_cmd, shell=True)
- 
-          send_result = ''
-          rev_result = ''
-          sum_sent = 0.0
-          sum_rcv = 0.0
-          sum_rev_sent = 0.0
-          sum_rev_rcvd = 0.0
-          sum_sent = float(re.search('SUM_SENT=([0-9.]*)\\\\n', out_result).group(1))
-          sum_rcvd = float(re.search('SUM_RCVD=([0-9.]*)\\\\n', out_result).group(1))
-          sum_rev_sent = float(re.search('SUM_REV_SENT=([0-9.]*)\\\\n', out_result).group(1))
-          sum_rev_rcvd = float(re.search('SUM_REV_RCVD=([0-9.]*)\\\\n', out_result).group(1))
- 
-          traffic_pass_perc = TRAFFICINFO.TRAFFIC_PASS_PERCENT / 100
-          if sum_rcvd > sum_sent * traffic_pass_perc:
-             send_result = 'pass' 
+              out = subprocess.check_output(ansible_cmd, shell=True)
+              time.sleep(2)
+
+              script = 'iperf3-client-tcp.yml'
+              extra_vars_prime = 'address=%s traffic_time=5 traffic_port=%s, gateway=%s' % \
+                        (src_dest_ip, traffic_port, src_engine_gw)
+              ansible_cmd_prime = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                         --extra-vars "%s"' % (src_engine_ip, script, extra_vars_prime)
+              out_prime = subprocess.check_output(ansible_cmd_prime, shell=True)
+              
+              if str(out_prime.find('unable to connect to server')) != '-1':
+                   # Execute ansible playbook to kill iperf server process
+                  script = 'iperf3-server-kill.yml'
+                  ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                          --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+                  out = subprocess.check_output(ansible_cmd, shell=True)
+                  time.sleep(3)
+              else:
+                  prime_success = 1
+                  break
+                   
+          if prime_success == 1:
+            logging.info("Running main traffic generation...")
+            extra_vars = 'address=%s traffic_time=%s traffic_port=%s, gateway=%s' % \
+                          (src_dest_ip, traffic_time, traffic_port, src_engine_gw) 
+            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                           --extra-vars "%s" -vvv' % (src_engine_ip, script, extra_vars)
+            #subprocess.check_output(ansible_cmd_prime, shell=True)
+            out_result = subprocess.check_output(ansible_cmd, shell=True)
+            time.sleep(2)
+   
+            # Execute ansible playbook to kill iperf server process
+            script = 'iperf3-server-kill.yml' 
+            extra_vars = 'traffic_port=%s' % (traffic_port)
+            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                           --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+            out = subprocess.check_output(ansible_cmd, shell=True)
+   
+            send_result = ''
+            rev_result = ''
+            sum_sent = 0.0
+            sum_rcv = 0.0
+            sum_rev_sent = 0.0
+            sum_rev_rcvd = 0.0
+            sum_sent = float(re.search('SUM_SENT=([0-9.]*)\\\\n', out_result).group(1))
+            sum_rcvd = float(re.search('SUM_RCVD=([0-9.]*)\\\\n', out_result).group(1))
+            sum_rev_sent = float(re.search('SUM_REV_SENT=([0-9.]*)\\\\n', out_result).group(1))
+            sum_rev_rcvd = float(re.search('SUM_REV_RCVD=([0-9.]*)\\\\n', out_result).group(1))
+   
+            traffic_pass_perc = TRAFFICINFO.TRAFFIC_PASS_PERCENT / 100
+            if sum_rcvd > sum_sent * traffic_pass_perc:
+               send_result = 'pass' 
+            else:
+               logging.info("TRAFFIC FAIL: Traffic sent from %s to %s was less than %s \
+                             sum sent bps = %s, sum received bps = %s") % \
+                             (src_obj.name, dst_obj.name, traffic_pass_perc, sum_sent, sum_rcvd)
+               send_result = 'fail'
+   
+            if sum_rev_rcvd > sum_rev_sent * traffic_pass_perc:
+               rev_result = 'pass'
+            else:
+               logging.info("TRAFFIC FAIL: Reverse traffic sent from %s to %s was less than %s \
+                             sum sent bps = %s, sum received bps = %s") % \
+                             (src_obj.name, dst_obj.name, traffic_pass_perc, sum_sent, sum_rcvd) 
+               rev_result = 'fail'
+           
+            if send_result == 'pass' and rev_result == 'pass':
+                return 1, {}
+            else:
+                return 0, {'sum_sent': sum_sent, 'sum_rcvd':sum_rcvd, 'sum_rev_sent':sum_rev_sent, \
+                           'sum_rev_rcvd':sum_rev_rcvd}
           else:
-             logging.info("TRAFFIC FAIL: Traffic sent from %s to %s was less than %s \
-                           sum sent bps = %s, sum received bps = %s") % \
-                           (src_obj.name, dst_obj.name, traffic_pass_perc, sum_sent, sum_rcvd)
-             send_result = 'fail'
- 
-          if sum_rev_rcvd > sum_rev_sent * traffic_pass_perc:
-             rev_result = 'pass'
-          else:
-             logging.info("TRAFFIC FAIL: Reverse traffic sent from %s to %s was less than %s \
-                           sum sent bps = %s, sum received bps = %s") % \
-                           (src_obj.name, dst_obj.name, traffic_pass_perc, sum_sent, sum_rcvd) 
-             rev_result = 'fail'
-         
-          if send_result == 'pass' and rev_result == 'pass':
-              return 1, {}
-          else:
-              return 0, {'sum_sent': sum_sent, 'sum_rcvd':sum_rcvd, 'sum_rev_sent':sum_rev_sent, \
-                         'sum_rev_rcvd':sum_rev_rcvd}
+              logging.error("traffic_run_handler: traffic prime failed - not executing main traffic")
+              return 0, {}
 
         except:
             logging.error("Error: traffic_run_handler failed to execute properly")
@@ -244,7 +272,180 @@ def traffic_run_handler(src_obj, dst_obj, **kwargs):
         out = subprocess.check_output(ansible_cmd, shell=True)
         time.sleep(2)
 
+def traffic_start_handler(src_obj, dst_obj, **kwargs):
+    # src vars below represent source traffic generator
+    src_engine_ip = src_obj.topo['traffic_engine_ip']
+    src_engine_gw = src_obj.topo['provider_ip']
+    src_dest_ip = str(re.search('([0-9.]+)/*[0-9]*', \
+         dst_obj.topo['traffic_engine_int_ip']).group(1))
+    src_dest_gw = dst_obj.topo['provider_ip']
+    dst_engine_ip = dst_obj.topo['traffic_engine_ip']
 
+    extra_vars = ''
+    traffic_time = 10000
+    traffic_prot = 'tcp'
+    traffic_bw = '1G'
+    traffic_send_port = 5201
+    traffic_rev_port = 5202
+    if kwargs.has_key('traffic_time'):
+        traffic_time = kwargs['traffic_time']
+    if kwargs.has_key('traffic_bw'):
+        traffic_bw = kwargs['traffic_bw']
+    if kwargs.has_key('traffic_prot'):
+        traffic_prot = kwargs['traffic_prot']
+    if kwargs.has_key('traffic_send_port'):
+        traffic_port = kwargs['traffic_send_port']
+    if kwargs.has_key('traffic_rev_port'):
+        traffic_port = kwargs['traffic_rev_port']
+
+    if src_obj.topo['traffic_mode'] == 'external' and \
+           dst_obj.topo['traffic_mode'] == 'external':
+      if src_obj.traffic_running == 0:
+        try:
+          # Run short traffic set below to ensure datapath
+          prime_success = 1
+#         for loop in range(5):
+#             logging.info("Running prime traffic procedure...")
+#             # Execute ansible playbook to start iperf server
+#             script = 'iperf3-server.yml'
+#             extra_vars = 'address=%s traffic_port=%s gateway=%s' \
+#                       % (src_dest_ip, traffic_port, src_dest_gw)
+#             ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+#                        --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+#             out = subprocess.check_output(ansible_cmd, shell=True)
+#             time.sleep(2)
+
+#             script = 'iperf3-client-tcp.yml'
+#             extra_vars_prime = 'address=%s traffic_time=5 traffic_port=%s, gateway=%s' % \
+#                       (src_dest_ip, traffic_port, src_engine_gw)
+#             ansible_cmd_prime = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+#                        --extra-vars "%s"' % (src_engine_ip, script, extra_vars_prime)
+#             out_prime = subprocess.check_output(ansible_cmd_prime, shell=True)
+
+#             if str(out_prime.find('unable to connect to server')) != '-1':
+#                  # Execute ansible playbook to kill iperf server process
+#                 script = 'iperf3-server-kill.yml'
+#                 ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+#                         --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+#                 out = subprocess.check_output(ansible_cmd, shell=True)
+#                 time.sleep(3)
+#             else:
+#                 prime_success = 1
+#                 break
+          if prime_success == 1:
+
+            script = 'iperf3-server-bg.yml'
+            extra_vars = 'address=%s traffic_send_port=%s traffic_rev_port=%s' \
+                     % (src_dest_ip, traffic_send_port, traffic_rev_port)
+            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                    --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+            logging.info("iperf3 server: %s" % ansible_cmd)
+            out = subprocess.check_output(ansible_cmd, shell=True)
+            time.sleep(1)
+    
+            logging.info("Starting background traffic for %s <-> %s..." \
+                          % (src_obj.name, dst_obj.name))
+            script = 'iperf3-client-tcp-bg.yml'
+            extra_vars = 'address=%s traffic_time=%s traffic_send_port=%s traffic_rev_port=%s' % \
+                          (src_dest_ip, traffic_time, traffic_send_port, traffic_rev_port)
+            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                           --extra-vars "%s"' % (src_engine_ip, script, extra_vars)
+            logging.info("iperf3 client: %s" % ansible_cmd)
+
+            out_result = subprocess.check_output(ansible_cmd, shell=True)
+
+            src_obj.traffic_running = 1
+
+            return 1, {}
+
+        except:
+            logging.error("Error: traffic_start_handler failed to execute properly")
+            pdb.set_trace()
+            return 0, {}
+
+    elif src_obj.topo['traffic_mode'] == 'os' and \
+           dst_obj.topo['traffic_mode'] == 'os':
+        #src_engine_ip = src_obj.topo['traffic_engine_ip']
+        #src_dest_ip = str(re.search('([0-9.]+)/[0-9]+', \
+        #   dst_obj.topo['traffic_engine_int_ip']).group(1))
+        #dst_engine_ip = dst_obj.topo['traffic_engine_ip']
+        pdb.set_trace()
+        dst_lxd_inst_name = dst_obj.topo['traffic_instance_name']
+
+        script = 'iperf3-server-lxd.yml'
+        extra_vars = 'traffic_engine_int_ip=%s traffic_instance_name=%s traffic_port=%s' \
+                      % (src_dest_ip, dst_lxd_inst_name, traffic_port)
+        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                         --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+        out = subprocess.check_output(ansible_cmd, shell=True)
+        time.sleep(2)
+
+
+
+def traffic_stop_handler(src_obj, dst_obj, **kwargs):
+    # src vars below represent source traffic generator
+    src_engine_ip = src_obj.topo['traffic_engine_ip']
+    src_engine_gw = src_obj.topo['provider_ip']
+    src_dest_ip = str(re.search('([0-9.]+)/*[0-9]*', \
+         dst_obj.topo['traffic_engine_int_ip']).group(1))
+    src_dest_gw = dst_obj.topo['provider_ip']
+    dst_engine_ip = dst_obj.topo['traffic_engine_ip']
+
+    extra_vars = ''
+    traffic_send_port = 5201
+    traffic_rev_port = 5202
+    if kwargs.has_key('traffic_send_port'):
+        traffic_port = kwargs['traffic_send_port']
+    if kwargs.has_key('traffic_rev_port'):
+        traffic_port = kwargs['traffic_rev_port']
+
+    if src_obj.topo['traffic_mode'] == 'external' and \
+           dst_obj.topo['traffic_mode'] == 'external':
+      if src_obj.traffic_running == 1:
+        try:
+
+            # Execute ansible playbook to kill iperf client processes
+            script = 'iperf3-client-tcp-bg-kill.yml'
+            extra_vars = 'address=%s traffic_send_port=%s traffic_rev_port=%s' \
+                          % (src_dest_ip, traffic_send_port, traffic_rev_port)
+            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                           --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+            logging.info("iperf3 kill client: %s" % ansible_cmd)
+            out = subprocess.check_output(ansible_cmd, shell=True)
+
+            # Execute ansible playbook to kill iperf server processes
+            script = 'iperf3-server-bg-kill.yml'
+            extra_vars = 'address=%s traffic_send_port=%s traffic_rev_port=%s' \
+                          % (src_dest_ip, traffic_send_port, traffic_rev_port)
+            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                           --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+            logging.info("iperf3 kill server: %s" % ansible_cmd)
+            out = subprocess.check_output(ansible_cmd, shell=True)
+
+            src_obj.traffic_running = 0
+            return 1, {}
+
+        except:
+            logging.error("Error: traffic_stop_handler failed to execute properly")
+            pdb.set_trace()
+            return 0, {}
+
+    elif src_obj.topo['traffic_mode'] == 'os' and \
+           dst_obj.topo['traffic_mode'] == 'os':
+        #src_engine_ip = src_obj.topo['traffic_engine_ip']
+        #src_dest_ip = str(re.search('([0-9.]+)/[0-9]+', \
+        #   dst_obj.topo['traffic_engine_int_ip']).group(1))
+        #dst_engine_ip = dst_obj.topo['traffic_engine_ip']
+        pdb.set_trace()
+        dst_lxd_inst_name = dst_obj.topo['traffic_instance_name']
+
+        script = 'iperf3-server-lxd.yml'
+        extra_vars = 'traffic_engine_int_ip=%s traffic_instance_name=%s traffic_port=%s' \
+                      % (src_dest_ip, dst_lxd_inst_name, traffic_port)
+        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                         --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+        out = subprocess.check_output(ansible_cmd, shell=True)
+        time.sleep(2)
 
 
 

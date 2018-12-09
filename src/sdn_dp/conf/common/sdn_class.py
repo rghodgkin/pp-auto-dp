@@ -86,8 +86,10 @@ class SdnEdgeParent(object):
         self.os = {'networks':{'tenant':{'net_obj':'', 'subnet_obj':'', \
                    'port_name':'', 'port_obj':''}}, 
                    'server':{'server_obj':''}}
+        self.traffic_info = {}
         self.deploy_state = 0
         self.traffic_state = 0
+        self.traffic_running = 0
 
     def destroy(self):
         server = self.os['server']['server_obj'] 
@@ -209,6 +211,14 @@ class SdnEdgeCloudObj(SdnEdgeParent):
             return 0 
 
     def traffic_run(self, dest_name, **kwargs):
+        '''
+        This method runs traffic in foreground for x number of seconds, default
+        being 10 seconds and verifies that sent versus received is within 99% of
+        each other
+                 Args:  traffic_time=x   (default 10)
+                        traffic_port=x   (default 5201) 
+        '''
+
         if self.traffic_state == 0:
         # If traffic_state = 0 then we need to configure the subinterface
         #   and routes on each gateway device for reachability
@@ -223,16 +233,71 @@ class SdnEdgeCloudObj(SdnEdgeParent):
           elif self.topo['traffic_mode'] == "os":
             pass 
 
-        # Start background iperf3 instance 
+        # Start iperf3 foreground instance 
+        logging.info("Starting traffic between %s and %s" % (self.name, dest_name))
         dst_obj = self.network.edge_name_list['cloud'][dest_name]
         output = sdn_utils.traffic_run_handler(self, dst_obj, **kwargs)[0] 
-        if output == '1':
+        if output == 1:
             logging.info("Traffic for %s -> %s passed" % (self.name, dest_name))
             return 1
         else:
             logging.info("Traffic for %s -> %s failed" % (self.name, dest_name))
             return 0
-        #pdb.set_trace()
+
+    def traffic_start(self, dest_name, **kwargs):
+        '''
+        This method starts background traffic between source gw and dst gw
+        and leaves running for x seconds.   Stdout will be written into a tmp
+        file upon traffic_stop located in '/tmp/<src>-<dst>-<pid>.log'
+        iperf3 pid info will be writen into 'self.traffic_info{} data structure
+        such that 'traffic_stop' and other routines can access later.
+        '''
+
+        if self.traffic_state == 0:
+        # If traffic_state = 0 then we need to configure the subinterface
+        #   and routes on each gateway device for reachability 
+          if self.topo['traffic_mode'] == "external":
+            # The below will configure traffic requirements for all
+            #  gateways in same network as this device - thus traffic
+            #  can be sent anywhere
+            # 'ansible_traffic_routes' sets 'obj.traffic_state'->1
+            ansible_utils.ansible_traffic_subint(self)
+            ansible_utils.ansible_traffic_routes(self)
+
+          elif self.topo['traffic_mode'] == "os":
+            pass
+
+        if self.traffic_running == 0:
+          logging.info("Starting background traffic between %s and %s" \
+                        % (self.name, dest_name))
+          dst_obj = self.network.edge_name_list['cloud'][dest_name]
+          output = sdn_utils.traffic_start_handler(self, dst_obj, **kwargs)[0]
+
+          return 1
+
+        else:
+          logging.info("Error: traffic_start: cannot start traffic, already \
+                          in running state")
+          return 0
+
+    def traffic_stop(self, dest_name, **kwargs):
+        '''
+        This method stops background traffic between source gw and dst gw.
+        This method accompanies the 'traffic_start' method.
+        '''
+
+        if self.traffic_running == 1:
+          logging.info("Stopping background traffic between %s and %s" \
+                        % (self.name, dest_name))
+          dst_obj = self.network.edge_name_list['cloud'][dest_name]
+          output = sdn_utils.traffic_stop_handler(self, dst_obj, **kwargs)[0]
+
+          return 1
+
+        else:
+          logging.info("Error: traffic_start: cannot start traffic, already \
+                          in running state")
+          return 0
 
 
 class SdnEdgeSiteCloudObj(SdnEdgeParent):
