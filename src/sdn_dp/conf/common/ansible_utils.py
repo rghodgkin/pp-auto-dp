@@ -142,8 +142,10 @@ def ansible_traffic_routes(cloud_obj):
 
         gw.traffic_state = 1
 
+      return 1, {}
+
     except:
-        logging.error("Error: ansible_traffic_routes: failed to provision properly")
-        return 0, {}
+      logging.error("Error: ansible_traffic_routes: failed to provision properly")
+      return 0, {}
 
 

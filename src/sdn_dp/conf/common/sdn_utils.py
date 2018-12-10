@@ -448,6 +448,76 @@ def traffic_stop_handler(src_obj, dst_obj, **kwargs):
         time.sleep(2)
 
 
+def traffic_stop_iperf3_all(engine_ip, **kwargs):
+    '''
+    This function will log into the engine_ip provided and kill all iperf3 processes
+    that are currently running.
+    '''
+
+    try:
+
+        # Execute ansible playbook to kill iperf client processes
+        script = 'iperf3-kill-all.yml'
+        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s"' \
+                       % (engine_ip, script)
+        logging.info("Killing all iperf3 processes on engine %s" % engine_ip)
+        out = subprocess.check_output(ansible_cmd, shell=True)
+
+        return 1, {}
+
+    except:
+        logging.error("Error: traffice_stop_iperf3_all: failed to execute properly")
+        pdb.set_trace()
+        return 0, {}
+
+def return_sys_util(cloud_obj, **kwargs):
+    '''
+    This procedure finds the engine upon which the cloud object is running and
+    returns the system utilization for cpu, mem, etc
+    Return string values are:
+                { 
+                  CPU: {user:<value>, sys:value, idle:value, load:<value>}
+                  MEM: {kbfree:<value>, kbused:<value>, percused:<value>}
+                  DISK: {tps:<value>, rkbs:<value>, wkbsp:<value>, util:<value>}
+                  INT: {rps:<value>, tps:<value>, rbs:<value>, tbs:<value>}}
+                }
+
+                CPU: "USER=$3 SYS=$4 IDLE=$8"
+                MEM: "KBFREE=$2 KBUSED=$4 PERCUSED=$5"
+                DISK: "TPS=$3 RKBS=$4 WKBS=$5 UTIL=$10"
+                INT:  "RPS=$3 TPS=$4 RBS=$5 TBS=$6"
+    '''
+
+    try:
+       pdb.set_trace() 
+       engine_ip = cloud_obj.topo['traffic_engine_ip']
+       
+       script = 'return_sys_util.yml'
+       ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s"' \
+                       % (engine_ip, script)
+       logging.info("Pulling system utilization stats for %s" % engine_ip)
+       out = subprocess.check_output(ansible_cmd, shell=True)
+       kw = {}
+       ret_klist = {}
+       kw['cpu'] = ["CPU-USER", "CPU-SYS", "CPU-IDLE"]
+       kw['mem'] = ["MEM-KBFREE", "MEM-KBUSED", "MEM-PERCUSED"]
+       kw['disk'] = ["DISK-TPS", "DISK-RKBS", "DISK-WKBS", "DISK-UTIL"]
+       kw['int'] = ["INT-RPS", "INT-TPS", "INT-RBS", "INT-TBS"]
+       key_list = ["cpu", "mem", "disk", "int"]
+       for key in key_list:
+           ret_klist[key] = {}
+           for key_sub in kw[key]:
+               search_str = "%s=([0-9.a-zA-Z]+)"
+               ret_klist[key][key_sub] = re.search(search_str, out).group(1)
+
+       return 1, {ret_klist}
+
+    except:
+       logging.error("Error: return_sys_util: failed to execute properly")
+       pdb.set_trace()
+       return 0, {}
+
+    
 
 
 

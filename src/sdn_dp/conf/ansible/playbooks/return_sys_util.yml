@@ -1,0 +1,65 @@
+---
+ - name: Return system resource utilization 
+   hosts: all
+   gather_facts: false
+   become: true
+
+   vars:
+     cpu: 1
+     mem: 1
+     disk: 1
+     int: 1
+
+   tasks:
+   - name: Install sysstat if not already
+     apt:
+       name: sysstat
+       state: present
+
+   - name: Pull CPU stats
+     shell: >
+        sar 1 1 |
+        grep Average |
+        awk '//{print "CPU-USER="$3" CPU-SYS="$4" CPU-IDLE="$8}'
+     register: cpu_util
+     when: cpu == 1
+
+   - name: Pull memory stats
+     shell: >
+        sar -r 1 1 |
+        grep Average |
+        awk '//{print "MEM-KBFREE="$2" MEM-KBUSED="$4" MEM-PERCUSED="$5}'
+     register: mem_util
+     when: mem == 1
+
+   - name: Pull disk stats
+     shell: >
+        sar -d -p 1 1 |
+        grep Average |
+        grep sda |
+        awk '//{print "DISK-TPS="$3" DISK-RKBS="$4" DISK-WKBS="$5" DISK-UTIL="$10}'
+     register: disk_util
+     when: disk == 1
+
+   - name: Pull interface stats
+     shell: >
+        sar -n DEV 1 1 |
+        grep bond0.50 |
+        grep Average |
+        awk '//{print "INT-RPS="$3" INT-TPS="$4" INT-RBS="$5" INT-TBS="$6}'
+     register: int_util
+     when: int == 1 
+
+   - debug: 
+       var: cpu_util
+
+   - debug:
+       var: mem_util
+
+   - debug:
+       var: disk_util
+
+   - debug:
+       var: int_util
+
+
