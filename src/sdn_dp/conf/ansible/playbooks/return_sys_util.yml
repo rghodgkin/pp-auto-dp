@@ -6,6 +6,7 @@
 
    vars:
      cpu: 1
+     cpuload: 1
      mem: 1
      disk: 1
      int: 1
@@ -20,9 +21,17 @@
      shell: >
         sar 1 1 |
         grep Average |
-        awk '//{print "CPU-USER="$3" CPU-SYS="$4" CPU-IDLE="$8}'
+        awk '//{print "CPU-USER="$3" CPU-SYS="$5" CPU-IDLE="$8}'
      register: cpu_util
      when: cpu == 1
+
+   - name: Pull CPU load stats
+     shell: >
+        sar -q 1 1 |
+        grep Average |
+        awk '//{print "PSIZE="$3" QSIZE="$2" LAVG1="$4" LAVG5="$5" LAVG15="$6" BLOCKED="$7}' 
+     register: cpu_load
+     when: cpuload == 1
 
    - name: Pull memory stats
      shell: >
@@ -44,7 +53,7 @@
    - name: Pull interface stats
      shell: >
         sar -n DEV 1 1 |
-        grep bond0.50 |
+        grep -G 'bond0 ' |
         grep Average |
         awk '//{print "INT-RPS="$3" INT-TPS="$4" INT-RBS="$5" INT-TBS="$6}'
      register: int_util
@@ -52,6 +61,9 @@
 
    - debug: 
        var: cpu_util
+
+   - debug:
+       var: cpu_load
 
    - debug:
        var: mem_util

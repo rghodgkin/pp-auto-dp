@@ -3,8 +3,9 @@
 
 import pytest
 import logging
-from time import sleep
+import time
 import pdb
+import random
 import pprint
 import sdn_dp.conf.common.sdn_utils as sdn_utils
 
@@ -18,10 +19,11 @@ class TestC2CTraffic:
     @classmethod
     def after_class(cls, common):
         logging.info("inside after_class")
-        pdb.set_trace()
-        if common.topo['other']['traffic'] == 'external':
-            for cloud in common.config['devices']['traffic'].keys():
-              sdn_utils.traffic_stop_iperf3_all(common.config['devices']['traffic'][cloud]['engine_ip'])
+        pass
+        #pdb.set_trace()
+        #if common.topo['other']['traffic'] == 'external':
+        #    for cloud in common.config['devices']['traffic'].keys():
+        #      sdn_utils.traffic_stop_iperf3_all(common.config['devices']['traffic'][cloud]['engine_ip'])
 
     def before_each_func(self, common):
         logging.info("inside before_each_func")
@@ -31,62 +33,126 @@ class TestC2CTraffic:
         logging.info("inside after_each_func")
         pass
 
+
     def test_c2c_dp_traffic_step(self, common, dp_setup):
         '''
-        This testcase configures 50% of num_nets with bi-directional traffic,
-         and then begins stepping by 'num_nets_step' up to 100%, logging system resources
-         at each step.
+        This testcase will run stepped traffic starting with 'base' number of nets
+        and incrementing in steps as per 'num_nets_step' until reaching the final
+        of 'num_nets'.
+                 Variables:
+                             num_nets = Total end number of nets to run traffic
+                             base = Starting point from which to take first data point
+                             num_nets_step = Number of nets to step up from base until
+                                              reaching 'num_nets' total
         '''
         logging.info("Executing testcase: test_c2c_dp_traffic_step")
         print("dp_setup setup_status is: %s" % dp_setup.setup_status)
 
+        ############### MANUALLY CONFIG THESE VALUES ##############
+        num_nets = 4
+        base = 2 
+        num_nets_step = 1
+        time_sleep = 10
+        ###########################################################
+
+        # Set some needed variable values
+        result_klist = {}
+        high_cntr = int(base)
+        num_nets_step_cnt = (num_nets - base) / num_nets_step
+        net_list = random.sample(range(len(common.sdn)), num_nets)
+        net_cntr = 0
+
+        # Verify that all nets are up prior to starting test
+        pass_flag = 1
+        gw_fail_list = []
+        for net in common.sdn:
+            out = sdn_utils.verify_gws_up(net)
+            if out[0] == 0:
+                pass_flag = 0
+                gw_fail_list.append(out[1]['stopped'])
+
+        if pass_flag == 0:
+            logging.error("The following gws are in STOPPED state: %s" % gw_fail_list)
+            pdb.set_trace()
+        elif pass_flag == 1:
+            logging.info("All gateways are in UP state, proceeding with test...")
+
         pdb.set_trace()
-        num_nets = len(common.sdn)
-        time_sleep = 60
+        # Test
+#        import sdn_dp.conf.os.os_lib as os_lib 
+#        neutron = common.os['clients']['neutron']['client']
+#        net0=common.sdn[0]
+#        cgw1 = net0.edge_cloud_list[0]
+#        port_ip=cgw1.topo['provider_ip']
+#        os_lib.os_apply_port_qos(neutron, 'bw-limiter', port_ip)
 
-        if num_nets % 10  != 0:
-            logging.error("Error: test_c2c_dp_traffic_step, num_nets MUST be divisible \
-                           by 10")
-            assert 0
-        else:
-            # Testcase will configure 50% of nets and then step up by 10%
-            base = num_nets * .5
-            num_nets_step = num_nets / 10
-            result_klist = {}
+        # Dump base system utilization prior to starting traffic
+        cgw1 = common.sdn[0].edge_cloud_list[0]
+        cgw2 = common.sdn[0].edge_cloud_list[1]
+        result_klist[0] = {}
+        result_klist[0][cgw1.topo['engine']] = sdn_utils.return_sys_util(cgw1)
+        #result_klist[0][cgw2.topo['engine']] = sdn_utils.return_sys_util(cgw2)
 
-        # Loop through increments of num_net_steps until 100%
-        while net_cntr < high_cntr:
-            for net in range(net_cntr, high_cntr):
+        # Configure traffic for Base number of nets
+        for cnt in range(0, base):
+            net = common.sdn[net_list[net_cntr]]
+            cgw1 = net.edge_cloud_list[0]
+            cgw2 = net.edge_cloud_list[1]
+            cgw1.traffic_start(cgw2.name)
+            net_cntr += 1
+
+        logging.info("Sleeping for %s seconds to soak traffic..." % time_sleep)
+        time.sleep(time_sleep)
+
+        logging.info("Recording results for %s number of cloud networks" \
+                      % (net_cntr))
+        result_klist[net_cntr] = {}
+        result_klist[net_cntr][cgw1.topo['engine']] = sdn_utils.return_sys_util(cgw1)
+        #result_klist[net_cntr + 1][cgw2.topo['engine']] = sdn_utils.return_sys_util(cgw2)
+
+        print("### Engine utilization stats with %s networks for: %s ###" % (net_cntr, cgw1.topo['engine']))
+        pprint.pprint(result_klist[net_cntr][cgw1.topo['engine']])
+        #print("### Engine utilization stats with %s networks for: %s ###" % (net_cntr, cgw2.topo['engine']))
+        #pprint.pprint(result_klist[net_cntr + 1][cgw2.topo['engine']])
+
+        for cntx in range(0, num_nets_step_cnt):
+            for cnty in range(0, num_nets_step):
+                net = common.sdn[net_list[net_cntr]]
                 cgw1 = net.edge_cloud_list[0]
                 cgw2 = net.edge_cloud_list[1]
-                logging.info("Starting bidirectional traffic for %s <-> %s" \
-                              % (cgw1.name, cgw2.name))
-                sdn_utils.traffic_start_handler(cgw1, cgw2)
-                time.sleep(3)
+                cgw1.traffic_start(cgw2.name)
                 net_cntr += 1
+            logging.info("Sleeping for %s seconds to soak traffic..." % time_sleep)
             time.sleep(time_sleep)
+    
             logging.info("Recording results for %s number of cloud networks" \
-                          % (net_cntr + 1)) 
-            result_klist[net_cntr + 1] = {}
-            result_klist[net_cntr + 1][cgw1.name] = sdn_utils.return_sys_util(cgw1)
-            result_klist[net_cntr + 1][cgw2.name] = sdn_utils.return_sys_util(cgw2)
+                          % (net_cntr))
+            result_klist[net_cntr] = {}
+            result_klist[net_cntr][cgw1.topo['engine']] = sdn_utils.return_sys_util(cgw1)
+            #result_klist[net_cntr + 1][cgw2.topo['engine']] = sdn_utils.return_sys_util(cgw2)
+    
+            print("### Engine utilization stats with %s networks for: %s ###" % (net_cntr, cgw1.topo['engine']))
+            pprint.pprint(result_klist[net_cntr][cgw1.topo['engine']])
+            #print("### Engine utilization stats with %s networks for: %s ###" % (net_cntr, cgw2.topo['engine']))
+            #pprint.pprint(result_klist[net_cntr + 1][cgw2.topo['engine']])
 
-            pprint.pprint(result_klist[net_cntr + 1][cgw1.name])
-            pprint.pprint(result_klist[net_cntr + 1][cgw2.name])
 
-            high_cntr += num_nets_step
+        # Print the entire result_klist dict
+        print("### Entire dictionary result for engine utilization ###")
+        pprint.pprint(result_klist)
 
         # Loop through and stop traffic for all nets
         net_cntr = 0
-        while net_cntr < high_cntr:
+        for cnt in range(net_cntr, num_nets):
+            net = common.sdn[net_list[net_cntr]]
             cgw1 = net.edge_cloud_list[0]
             cgw2 = net.edge_cloud_list[1]
             logging.info("Stopping bidirectional traffic for %s <-> %s" \
                           % (cgw1.name, cgw2.name))
-            sdn_utils.traffic_stop_handler(cgw1, cgw2)
+            cgw1.traffic_stop(cgw2.name)
             net_cntr += 1
-            time.sleep(3)
 
+        assert 1 
 
 
 #    def test_c2c_dp_traffic_bg(self, common, dp_setup):

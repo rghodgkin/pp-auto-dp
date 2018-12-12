@@ -302,66 +302,36 @@ def traffic_start_handler(src_obj, dst_obj, **kwargs):
            dst_obj.topo['traffic_mode'] == 'external':
       if src_obj.traffic_running == 0:
         try:
+
           # Run short traffic set below to ensure datapath
-          prime_success = 1
-#         for loop in range(5):
-#             logging.info("Running prime traffic procedure...")
-#             # Execute ansible playbook to start iperf server
-#             script = 'iperf3-server.yml'
-#             extra_vars = 'address=%s traffic_port=%s gateway=%s' \
-#                       % (src_dest_ip, traffic_port, src_dest_gw)
-#             ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-#                        --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
-#             out = subprocess.check_output(ansible_cmd, shell=True)
-#             time.sleep(2)
+          script = 'iperf3-server-bg.yml'
+          extra_vars = 'address=%s traffic_send_port=%s traffic_rev_port=%s' \
+                   % (src_dest_ip, traffic_send_port, traffic_rev_port)
+          ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                  --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+          #logging.info("iperf3 server: %s" % ansible_cmd)
+          out = subprocess.check_output(ansible_cmd, shell=True)
+          time.sleep(1)
+  
+          #logging.info("Starting background traffic for %s <-> %s..." \
+          #              % (src_obj.name, dst_obj.name))
+          script = 'iperf3-client-tcp-bg.yml'
+          extra_vars = 'address=%s traffic_time=%s traffic_send_port=%s traffic_rev_port=%s' % \
+                        (src_dest_ip, traffic_time, traffic_send_port, traffic_rev_port)
+          ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                         --extra-vars "%s"' % (src_engine_ip, script, extra_vars)
+          #logging.info("iperf3 client: %s" % ansible_cmd)
 
-#             script = 'iperf3-client-tcp.yml'
-#             extra_vars_prime = 'address=%s traffic_time=5 traffic_port=%s, gateway=%s' % \
-#                       (src_dest_ip, traffic_port, src_engine_gw)
-#             ansible_cmd_prime = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-#                        --extra-vars "%s"' % (src_engine_ip, script, extra_vars_prime)
-#             out_prime = subprocess.check_output(ansible_cmd_prime, shell=True)
+          out_result = subprocess.check_output(ansible_cmd, shell=True)
 
-#             if str(out_prime.find('unable to connect to server')) != '-1':
-#                  # Execute ansible playbook to kill iperf server process
-#                 script = 'iperf3-server-kill.yml'
-#                 ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-#                         --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
-#                 out = subprocess.check_output(ansible_cmd, shell=True)
-#                 time.sleep(3)
-#             else:
-#                 prime_success = 1
-#                 break
-          if prime_success == 1:
+          src_obj.traffic_running = 1
 
-            script = 'iperf3-server-bg.yml'
-            extra_vars = 'address=%s traffic_send_port=%s traffic_rev_port=%s' \
-                     % (src_dest_ip, traffic_send_port, traffic_rev_port)
-            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-                    --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
-            logging.info("iperf3 server: %s" % ansible_cmd)
-            out = subprocess.check_output(ansible_cmd, shell=True)
-            time.sleep(1)
-    
-            logging.info("Starting background traffic for %s <-> %s..." \
-                          % (src_obj.name, dst_obj.name))
-            script = 'iperf3-client-tcp-bg.yml'
-            extra_vars = 'address=%s traffic_time=%s traffic_send_port=%s traffic_rev_port=%s' % \
-                          (src_dest_ip, traffic_time, traffic_send_port, traffic_rev_port)
-            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-                           --extra-vars "%s"' % (src_engine_ip, script, extra_vars)
-            logging.info("iperf3 client: %s" % ansible_cmd)
-
-            out_result = subprocess.check_output(ansible_cmd, shell=True)
-
-            src_obj.traffic_running = 1
-
-            return 1, {}
+          return 1, {}
 
         except:
-            logging.error("Error: traffic_start_handler failed to execute properly")
-            pdb.set_trace()
-            return 0, {}
+          logging.error("Error: traffic_start_handler failed to execute properly")
+          pdb.set_trace()
+          return 0, {}
 
     elif src_obj.topo['traffic_mode'] == 'os' and \
            dst_obj.topo['traffic_mode'] == 'os':
@@ -489,8 +459,9 @@ def return_sys_util(cloud_obj, **kwargs):
     '''
 
     try:
-       pdb.set_trace() 
-       engine_ip = cloud_obj.topo['traffic_engine_ip']
+
+       engine_name = cloud_obj.topo['engine']
+       engine_ip = cloud_obj.common.config['devices']['engines'][engine_name]
        
        script = 'return_sys_util.yml'
        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s"' \
@@ -500,24 +471,58 @@ def return_sys_util(cloud_obj, **kwargs):
        kw = {}
        ret_klist = {}
        kw['cpu'] = ["CPU-USER", "CPU-SYS", "CPU-IDLE"]
+       kw['cpuload'] = ["PSIZE", "QSIZE", "LAVG1", "LAVG5", "LAVG15"]
        kw['mem'] = ["MEM-KBFREE", "MEM-KBUSED", "MEM-PERCUSED"]
        kw['disk'] = ["DISK-TPS", "DISK-RKBS", "DISK-WKBS", "DISK-UTIL"]
        kw['int'] = ["INT-RPS", "INT-TPS", "INT-RBS", "INT-TBS"]
-       key_list = ["cpu", "mem", "disk", "int"]
+       key_list = ["cpu", "cpuload", "mem", "disk", "int"]
        for key in key_list:
            ret_klist[key] = {}
            for key_sub in kw[key]:
-               search_str = "%s=([0-9.a-zA-Z]+)"
+               search_str = "%s=([0-9.a-zA-Z]+)" % key_sub
                ret_klist[key][key_sub] = re.search(search_str, out).group(1)
 
-       return 1, {ret_klist}
+       return 1, ret_klist
 
     except:
        logging.error("Error: return_sys_util: failed to execute properly")
        pdb.set_trace()
        return 0, {}
 
+def verify_gws_up(net_obj, **kwargs):
+    '''
+    This procedure verifies the LXD status of all gateways in a net object.
+    Returns 1 if all are in 'running' state, 0 otherwise.  Also returns a list
+    of those running and down in a keyed list as secondary value.
+                return 0|1, {'running':[<list>], 'down': [<list]}
+    '''
     
+    try:
+
+        return_status = 1
+        running_list = []
+        stopped_list = []
+        for gw in net_obj.edge_list:
+            engine_ip = gw.common.config['devices']['engines'][gw.topo['engine']]
+            lxc_instance = gw.topo['instance_name']
+            
+            script = 'lxd-inst-info.yml'
+            extra_vars = 'instance=%s version=info' % lxc_instance 
+            ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                      --extra-vars "%s"' % (engine_ip, script, extra_vars)
+            out = subprocess.check_output(ansible_cmd, shell=True)
+            if re.search('Status: +Running', out):
+                running_list.append(gw.name)
+            else:
+                stopped_list.append(gw.name)
+                return_status = 0
+ 
+        return return_status, {'running':running_list, 'stopped':stopped_list}
+
+    except:
+        logging.error("Error: verify_gws_up: failed to execute properly")
+        pdb.set_trace()
+        return 0, {}
 
 
 

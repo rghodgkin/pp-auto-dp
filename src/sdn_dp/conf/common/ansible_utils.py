@@ -3,6 +3,7 @@ import pdb
 import subprocess
 import time
 import re
+from sdn_dp.conf.common.constants import CLOUDPROVINFO
 
 
 def ansible_deploy_lxd_ospf(common, cloud_obj):
@@ -41,6 +42,39 @@ def ansible_deploy_lxd_ospf(common, cloud_obj):
         return 1, out
     except:
         logging.error("Error: ansible_deploy_ospf_lxd: failed to provision properly")
+        pdb.set_trace()
+        return 0, {}
+
+def ansible_deploy_lxd_bgp(common, cloud_obj):
+    """
+    This function executes Ansible playbook for configure of basic BGP
+    into the LXD FRR instance.
+    """
+
+    try:
+
+        lxd_inst_name = cloud_obj.topo['instance_name']
+        engine_ip = common.config['devices']['engines'][cloud_obj.topo['engine']]
+        edge_type = cloud_obj.topo['type']
+
+        if edge_type == "cloud":
+            script = 'lxd-bgp-cloud.yml'
+
+        elif edge_type == "netrouter":
+            script = 'lxd-bgp-netrouter.yml'
+
+        extra_vars = "container_name=%s bgp_router_id=%s bgp_cloud_ip=%s" % \
+                          (cloud_obj.topo['instance_name'], CLOUDPROVINFO.AWSDEFAULTBGPID, \
+                           cloud_obj.topo['traffic_engine_int_ip'])
+        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                       --extra-vars "=%s"' % \
+                       (engine_ip, script, extra_vars)
+
+        out = subprocess.check_output(ansible_cmd, shell=True)
+
+        return 1, out
+    except:
+        logging.error("Error: ansible_deploy_bgp_lxd: failed to provision properly")
         pdb.set_trace()
         return 0, {}
 

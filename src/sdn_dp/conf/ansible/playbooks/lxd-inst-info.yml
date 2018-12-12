@@ -1,0 +1,26 @@
+---
+ - name: Return LXD instance info or config 
+   hosts: all
+   gather_facts: false
+   become: true
+
+   vars:
+      version: 'info' 
+
+   tasks:
+   - name: Return lxc info for instance
+     shell: lxc info {{ instance }} 
+     register: output 
+     when: version == "info"
+
+   - debug: var=output
+     when: version == "info"
+
+   - name: Return lxc expanded config for instance
+     shell: lxc config show --expanded {{ instance }}
+     register: output
+     when: version == "config"
+
+   - debug: var=output
+     when: version == "config"
+

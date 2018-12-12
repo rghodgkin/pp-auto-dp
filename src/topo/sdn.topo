@@ -1,7 +1,7 @@
 sdn:
   name: AUTO
   network:
-    count: 10 
+    count: 4 
     edge_list:
       - type: cloud
         cloud_provider: aws

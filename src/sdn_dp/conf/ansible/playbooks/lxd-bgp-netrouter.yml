@@ -1,0 +1,35 @@
+---
+ - name: Configure BGP for LXD netrouter/controller
+   hosts: all
+   gather_facts: false
+
+   tasks: 
+   - name: Copy OSPF daemons file to lxd container
+     copy:
+       src: files/bgp_lxd_daemons
+       dest: /var/lib/lxd/containers/{{ container_name }}/rootfs/etc/frr/daemons
+     become: yes
+  
+   - name: Splice BGP configuration into frr.conf
+     blockinfile:
+        path: /var/lib/lxd/containers/{{ container_name }}/rootfs/etc/frr/frr.conf
+        block: |
+            router bgp 65000
+              bgp router-id {{ bgp_router_id }} 
+              no bgp default ipv4-unicast
+              bgp default show-hostname
+              neighbor rrclients peer-group
+              neighbor rrclients remote-as 65000
+              neighbor rrclients advertisement-interval 1
+              bgp listen range {{ tenant_net_range }} peer-group rrclients
+              !
+              address-family ipv4 unicast
+                neighbor rrclients activate
+                neighbor rrclients route-reflector-client
+                neighbor rrclients soft-reconfiguration inbound
+              exit-address-family
+        insertafter: '^username*'
+     become: yes
+  
+   - name: Restart LXD container
+     command: lxc restart {{ container_name }}

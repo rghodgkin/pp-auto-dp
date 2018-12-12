@@ -295,8 +295,8 @@ class SdnEdgeCloudObj(SdnEdgeParent):
           return 1
 
         else:
-          logging.info("Error: traffic_start: cannot start traffic, already \
-                          in running state")
+          logging.info("Error: traffic_stop: cannot stop traffic, already \
+                          in stopped state")
           return 0
 
 

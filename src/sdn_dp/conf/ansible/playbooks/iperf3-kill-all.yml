@@ -7,7 +7,10 @@
 
    tasks:
    - name: list all iperf3 processes 
-     shell: ps -eaf | grep iperf3 | sed -r 's/^[a-zA-Z0-9]+ +([0-9]+) +.*/\1/'
+     shell: >
+        ps -eaf |
+        grep iperf3 |
+        awk '//{print $2}' 
      register: output_ps 
      ignore_errors: true
 
@@ -15,6 +18,7 @@
        var: output_ps
 
    - name: kill all iperf3 processes in list
-     shell: kill {{ item }}
-     with_items: output_ps
+     shell: kill {{ item | int }}
+     with_items: "{{ output_ps.stdout_lines }}"
+     ignore_errors: true
 

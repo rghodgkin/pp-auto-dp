@@ -73,6 +73,9 @@ class OSCLOUDFLAVOR(object):
     mobile = 'ubuntu-18.04-vpn'
     traffic = 'c1.small'
 
+class CLOUDPROVINFO(object):
+    AWSDEFAULTBGPID = 7224
+
 class TRAFFICINFO(object):
     # The below will configure external traffic gen ints with x.x.x.200/24
     EXTERNAL_IP = 200
