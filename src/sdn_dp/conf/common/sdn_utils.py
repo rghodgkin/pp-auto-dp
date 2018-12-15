@@ -265,12 +265,65 @@ def traffic_run_handler(src_obj, dst_obj, **kwargs):
         dst_lxd_inst_name = dst_obj.topo['traffic_instance_name']
 
         script = 'iperf3-server-lxd.yml'
-        extra_vars = 'traffic_engine_int_ip=%s traffic_instance_name=%s traffic_port=%s' \
-                      % (src_dest_ip, dst_lxd_inst_name, traffic_port)
+        extra_vars = 'traffic_instance_name=%s traffic_engine_int_ip=%s traffic_port=%s' \
+                        % (dst_lxd_inst_name, src_dest_ip, traffic_port)
         ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-                         --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+                       --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
         out = subprocess.check_output(ansible_cmd, shell=True)
         time.sleep(2)
+
+
+#        logging.info("Running main traffic generation...")
+#        extra_vars = 'address=%s traffic_time=%s traffic_port=%s, gateway=%s' % \
+#                      (src_dest_ip, traffic_time, traffic_port, src_engine_gw)
+#        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+#                       --extra-vars "%s" -vvv' % (src_engine_ip, script, extra_vars)
+#        #subprocess.check_output(ansible_cmd_prime, shell=True)
+#        out_result = subprocess.check_output(ansible_cmd, shell=True)
+#        time.sleep(2)
+#
+#        # Execute ansible playbook to kill iperf server process
+#        script = 'iperf3-server-kill.yml'
+#        extra_vars = 'traffic_port=%s' % (traffic_port)
+#        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+#                       --extra-vars "%s"' % (dst_engine_ip, script, extra_vars)
+#        out = subprocess.check_output(ansible_cmd, shell=True)
+#
+#        send_result = ''
+#        rev_result = ''
+#        sum_sent = 0.0
+#        sum_rcv = 0.0
+#        sum_rev_sent = 0.0
+#        sum_rev_rcvd = 0.0
+#        sum_sent = float(re.search('SUM_SENT=([0-9.]*)\\\\n', out_result).group(1))
+#        sum_rcvd = float(re.search('SUM_RCVD=([0-9.]*)\\\\n', out_result).group(1))
+#        sum_rev_sent = float(re.search('SUM_REV_SENT=([0-9.]*)\\\\n', out_result).group(1))
+#        sum_rev_rcvd = float(re.search('SUM_REV_RCVD=([0-9.]*)\\\\n', out_result).group(1))
+#
+#        traffic_pass_perc = TRAFFICINFO.TRAFFIC_PASS_PERCENT / 100
+#        if sum_rcvd > sum_sent * traffic_pass_perc:
+#           send_result = 'pass'
+#        else:
+#           logging.info("TRAFFIC FAIL: Traffic sent from %s to %s was less than %s \
+#                         sum sent bps = %s, sum received bps = %s") % \
+#                         (src_obj.name, dst_obj.name, traffic_pass_perc, sum_sent, sum_rcvd)
+#           send_result = 'fail'
+#
+#        if sum_rev_rcvd > sum_rev_sent * traffic_pass_perc:
+#           rev_result = 'pass'
+#        else:
+#           logging.info("TRAFFIC FAIL: Reverse traffic sent from %s to %s was less than %s \
+#                         sum sent bps = %s, sum received bps = %s") % \
+#                         (src_obj.name, dst_obj.name, traffic_pass_perc, sum_sent, sum_rcvd)
+#           rev_result = 'fail'
+#
+#        if send_result == 'pass' and rev_result == 'pass':
+#            return 1, {}
+#        else:
+#            return 0, {'sum_sent': sum_sent, 'sum_rcvd':sum_rcvd, 'sum_rev_sent':sum_rev_sent, \
+#                       'sum_rev_rcvd':sum_rev_rcvd}
+
+
 
 def traffic_start_handler(src_obj, dst_obj, **kwargs):
     # src vars below represent source traffic generator

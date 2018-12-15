@@ -29,9 +29,9 @@ class TopoTemps(object):
     #        'sdn_network':'', 'sdn_zone':'', 'type':'mobile'}
 
 class SDNVLAN(object):
-    AWS_VLAN_START = 160
+    AWS_VLAN_START = 150
     AWS_VLAN_MAX = 199 
-    GOOGLE_VLAN_START = 210
+    GOOGLE_VLAN_START = 200
     GOOGLE_VLAN_MAX = 249
 
 class SDNCIDR(object):
@@ -68,9 +68,9 @@ class OSCLOUDIMAGE(object):
 
 class OSCLOUDFLAVOR(object):
     netrouter = 'c1.small'
-    cloud = 'ubuntu-18.04-vpn'
-    site = 'ubuntu-18.04-vpn'
-    mobile = 'ubuntu-18.04-vpn'
+    cloud = 'c1.small'
+    site = 'c1.small'
+    mobile = 'c1.small'
     traffic = 'c1.small'
 
 class CLOUDPROVINFO(object):

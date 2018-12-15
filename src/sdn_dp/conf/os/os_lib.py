@@ -4,6 +4,7 @@
 import logging
 import pdb
 import time
+import re
 
 def os_create_tenant_net(neutron, name, **kwargs):
     '''
@@ -177,29 +178,22 @@ def os_apply_port_qos(neutron, qos_policy_name, port_ip):
     This procedure will apply the given qos policy to the given port inside 
     Openstack
     '''
-    pdb.set_trace() 
-    try:
-        out = neutron.list_qos_policies()
-        for policy in out['policies']:
-            if policy['name'] == qos_policy_name:
-                qos_policy_id = policy['id']
-                break
 
-        out = neutron.list_ports()
-        for port in out['ports']:
-            if re.search(port_ip, port['fixed_ips']):
+    out = neutron.list_qos_policies()
+    for policy in out['policies']:
+        if policy['name'] == qos_policy_name:
+            qos_policy_id = policy['id']
+            break
+
+    out = neutron.list_ports()
+    for port in out['ports']:
+        if re.search(str(port_ip), str(port['fixed_ips'])):
                 port_id = port['id']
 
-        # Execute OS command to apply the qos policy
-        cmd_str = "%s, {'port': {'qos_policy_id':%s}}" % (port_id, qos_policy_id)
-        neutron.update_port(cmd_str)
+    # Execute OS command to apply the qos policy
+    neutron.update_port(port_id, {'port': {'qos_policy_id':qos_policy_id}})
 
-        return 1, {}
-
-    except:
-        logging.error("os_apply_port_qos failed for port %s" % port_ip)
-        return 0, {}
-
+    return 1, {}
 
 
 

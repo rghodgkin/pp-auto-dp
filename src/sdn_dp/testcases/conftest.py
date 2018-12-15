@@ -56,7 +56,7 @@ def dp_setup(common):
 
         logging.info("Sleeping 10 seconds after deploy to let all containers \
                       get to active state")
-        time.sleep(10)
+        time.sleep(20)
 
 
         # TEMPORARY
@@ -108,6 +108,7 @@ def dp_setup(common):
                   edge_item.topo['traffic_engine_ip'] = \
                             traffic_kl[c_prov]['engine_ip']
                   edge_item.topo['traffic_name'] = c_name
+                  edge_item.topo['traffic_routes'] = common.topo['other']['traffic_routes']
   
                 elif c_type == 'site':
                   pass
@@ -132,12 +133,17 @@ def dp_setup(common):
 
           logging.info("Sleeping 20 seconds to allow for all traffic containers to come up...")
           time.sleep(20)
-          # Configure OSPF on LXD traffic instance
+          # Configure routes/routing protocol on LXD traffic instance
           for net in common.sdn:
               for edge_item in net.edge_cloud_list:
                 c_type = edge_item.topo['type']
                 if c_type == 'cloud':
-                  ansible_utils.ansible_deploy_lxd_traffic_ospf(common, edge_item)
+                  if edge_item.topo['traffic_routes'] == "ospf":
+                    ansible_utils.ansible_deploy_lxd_traffic_ospf(common, edge_item)
+                  elif edge_item.topo['traffic_routes'] == "bgp":
+                    pass
+                  elif edge_item.topo['traffic_routes'] == "manual":
+                    pass
                 
   
         else:

@@ -161,7 +161,7 @@ class SdnEdgeCloudObj(SdnEdgeParent):
             nova = self.common.os['clients']['nova']['client']
 
             image = nova.glance.find_image('%s' % OSCLOUDIMAGE.cloud)
-            flavor_name = OSCLOUDFLAVOR.netrouter
+            flavor_name = OSCLOUDFLAVOR.cloud
             flavor = nova.flavors.find(name=flavor_name)
             net_tenant = self.os['networks']['tenant']['net_obj']['network']['id']
             net_provider = self.os['networks']['provider']['net_obj']['network']['id']
@@ -231,7 +231,7 @@ class SdnEdgeCloudObj(SdnEdgeParent):
             ansible_utils.ansible_traffic_routes(self)
 
           elif self.topo['traffic_mode'] == "os":
-            pass 
+              pass
 
         # Start iperf3 foreground instance 
         logging.info("Starting traffic between %s and %s" % (self.name, dest_name))

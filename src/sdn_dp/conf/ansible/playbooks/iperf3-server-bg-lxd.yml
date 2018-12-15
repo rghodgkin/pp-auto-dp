@@ -1,0 +1,25 @@
+---
+ - name: Execute the given command and provide stdout 
+   hosts: all
+   gather_facts: false
+   become: true 
+
+   vars:
+     traffic_send_port: 5201
+     traffic_rev_port: 5202
+
+   tasks:
+   - name: lxd execute - spawn iperf3 SEND server command
+     raw: lxc exec {{ traffic_instance_name }} -- iperf3 -B {{ address }} -p {{ traffic_send_port }} -s >/dev/null 2>&1 & 
+     register: output_send 
+     ignore_errors: true
+
+   - name: lxd execut - spawn iperf3 REV server command
+     raw: lxc exec {{ traffic_instance_name }} -- iperf3 -B {{ address }} -p {{ traffic_rev_port }} -s >/dev/null 2>&1 & 
+     register: output_rev
+     ignore_errors: true
+
+   - debug:
+       var: command_output
+
+
