@@ -10,7 +10,9 @@
 
    tasks:
    - name: lxd exec execute iperf3 server command
-     raw: lxc exec {{ traffic_instance_name }} -- iperf3 -B {{ traffic_engine_int_ip }} -p {{ traffic_port }} -s -D
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "iperf3 -B {{ traffic_engine_int_ip }} -p {{ traffic_port }} -s &" 
+     async: 10000
+     poll: 0
      register: command_output
 
    - debug:

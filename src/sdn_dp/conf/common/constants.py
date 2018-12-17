@@ -30,9 +30,9 @@ class TopoTemps(object):
 
 class SDNVLAN(object):
     AWS_VLAN_START = 150
-    AWS_VLAN_MAX = 199 
-    GOOGLE_VLAN_START = 200
-    GOOGLE_VLAN_MAX = 249
+    AWS_VLAN_MAX = 349
+    GOOGLE_VLAN_START = 350
+    GOOGLE_VLAN_MAX = 549
 
 class SDNCIDR(object):
     OS_TENANT_IP_START = '198.18.0.0/16'

@@ -10,16 +10,23 @@
 
    tasks:
    - name: lxd execute - spawn iperf3 SEND server command
-     raw: lxc exec {{ traffic_instance_name }} -- iperf3 -B {{ address }} -p {{ traffic_send_port }} -s >/dev/null 2>&1 & 
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "iperf3 -B {{ traffic_engine_int_ip }} -p {{ traffic_send_port }} -s &"
+     async: 10000
+     poll: 0
      register: output_send 
      ignore_errors: true
 
    - name: lxd execut - spawn iperf3 REV server command
-     raw: lxc exec {{ traffic_instance_name }} -- iperf3 -B {{ address }} -p {{ traffic_rev_port }} -s >/dev/null 2>&1 & 
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "iperf3 -B {{ traffic_engine_int_ip }} -p {{ traffic_rev_port }} -s &" 
+     async: 10000
+     poll: 0
      register: output_rev
      ignore_errors: true
 
    - debug:
-       var: command_output
+       var: output_send
+
+   - debug:
+       var: output_rev
 
 

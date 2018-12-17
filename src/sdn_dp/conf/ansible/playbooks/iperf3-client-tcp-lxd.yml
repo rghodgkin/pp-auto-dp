@@ -1,0 +1,88 @@
+---
+ - name: Execute the given command and provide stdout 
+   hosts: all
+   gather_facts: false
+   become: false 
+
+   vars:
+     traffic_time: 10
+     traffic_prot: 'tcp'
+     traffic_bw: '1G'
+     traffic_port: 5201
+
+   tasks:
+   - name: execute iperf3 client command - SEND
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "iperf3 -f m -c {{ traffic_engine_int_ip }} -p {{ traffic_port }} -t {{ traffic_time }} -J"
+     register: command_output_c2s_tcp
+     when: traffic_prot  == "tcp"
+     ignore_errors: true
+
+   - name: execute iperf3 client command - REV
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "iperf3 -f m -c {{ traffic_engine_int_ip }} -p {{ traffic_port }} -t {{ traffic_time }} -J -R" 
+     register: command_output_c2s_rev_tcp
+     when: traffic_prot  == "tcp"
+     ignore_errors: true
+
+   - set_fact:
+       send_list: |
+             {{ command_output_c2s_tcp.stdout |
+                regex_findall('bits_per_second.*') |
+                list }}
+     when: command_output_c2s_tcp is succeeded
+
+   - debug: var=send_list
+     when: command_output_c2s_tcp is succeeded
+
+   - set_fact: 
+       sum_sent: |
+             {{ send_list[-2] |
+                regex_search('[0-9]*\.[0-9]*') |
+                regex_replace('([0-9\.]*)\n', '\\1') |
+                float }}
+     when: command_output_c2s_tcp is succeeded 
+
+   - set_fact:
+       sum_rcvd: |
+             {{ send_list[-1] |
+                regex_search('[0-9]*\.[0-9]*') |
+                regex_replace('([0-9\.]*)\n', '\\1') |
+                float }}
+     when: command_output_c2s_tcp is succeeded 
+
+   - set_fact:
+       send_list_rev: |
+             {{ command_output_c2s_rev_tcp.stdout |
+                regex_findall('bits_per_second.*') |
+                list }}
+     when: command_output_c2s_rev_tcp is succeeded
+
+   - debug: var=send_list_rev
+     when: command_output_c2s_rev_tcp is succeeded
+
+   - set_fact:
+       sum_rev_sent: |
+             {{ send_list_rev[-2] |
+                regex_search('[0-9]*\.[0-9]*') |
+                regex_replace('([0-9\.]*)\n', '\\1') |
+                float }}
+     when: command_output_c2s_rev_tcp is succeeded
+
+   - set_fact:
+       sum_rev_rcvd: |
+             {{ send_list_rev[-1] |
+                regex_search('[0-9]*\.[0-9]*') |
+                regex_replace('([0-9\.]*)\n', '\\1') |
+                float }}
+     when: command_output_c2s_rev_tcp is succeeded
+
+   - debug:
+       msg: "SUM_SENT={{ sum_sent }}, SUM_RCVD={{ sum_rcvd }}"
+     when: 
+         - command_output_c2s_tcp is succeeded
+
+   - debug:
+       msg: "SUM_REV_SENT={{ sum_rev_sent }}, SUM_REV_RCVD={{ sum_rev_rcvd }}"
+     when:
+         - command_output_c2s_rev_tcp is succeeded
+
+

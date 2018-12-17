@@ -34,7 +34,23 @@ class TestC2CTraffic:
         logging.info("inside after_each_func")
         pass
 
+    def test_traffic_bg(self, common, dp_setup):
+        base = 1
+        for cnt in range(0, base):
+            net = common.sdn[cnt]
+            cgw1 = net.edge_cloud_list[0]
+            cgw2 = net.edge_cloud_list[1]
+            cgw1.traffic_start(cgw2.name)
 
+        time.sleep(30)
+        for cnt in range(0, base):
+            net = common.sdn[cnt]
+            cgw1 = net.edge_cloud_list[0]
+            cgw2 = net.edge_cloud_list[1]
+            cgw1.traffic_stop(cgw2.name)
+
+
+#
 #    def test_c2c_dp_traffic_step(self, common, dp_setup):
 #        '''
 #        This testcase will run stepped traffic starting with 'base' number of nets
@@ -57,11 +73,11 @@ class TestC2CTraffic:
 #        # base = first block of nets to generate traffic across
 #        # num_nets_step = step in these increments from base up to num_nets
 #        # time_sleep = how long to let traffic soak at each step
-#        num_nets = 50  
-#        base = 30 
-#        num_nets_step = 10
-#        time_sleep = 120 
-#        apply_qos = 1
+#        num_nets = 4
+#        base = 2 
+#        num_nets_step = 1
+#        time_sleep = 10 
+#        apply_qos = 0
 #        qos_policy_name = 'bw-limiter'
 #        ###########################################################
 #
@@ -86,7 +102,6 @@ class TestC2CTraffic:
 #            pdb.set_trace()
 #        elif pass_flag == 1:
 #            logging.info("All gateways are in UP state, proceeding with test...")
-#        pdb.set_trace()
 #
 #        ### Dump base system utilization prior to starting traffic
 #        cgw1 = common.sdn[0].edge_cloud_list[0]
@@ -135,7 +150,6 @@ class TestC2CTraffic:
 #        logging.info(pprint.pprint(result_klist[net_cntr][cgw1.topo['engine']]))
 #        #print("### Engine utilization stats with %s networks for: %s ###" % (net_cntr, cgw2.topo['engine']))
 #        #pprint.pprint(result_klist[net_cntr + 1][cgw2.topo['engine']])
-#        pdb.set_trace()
 #
 #        ### Cycle through remaining nets and configure stepped traffic as per num_nets_step
 #        for cntx in range(0, num_nets_step_cnt):
@@ -170,7 +184,6 @@ class TestC2CTraffic:
 #            logging.info(pprint.pprint(result_klist[net_cntr][cgw1.topo['engine']]))
 #            #print("### Engine utilization stats with %s networks for: %s ###" % (net_cntr, cgw2.topo['engine']))
 #            #pprint.pprint(result_klist[net_cntr + 1][cgw2.topo['engine']])
-#            pdb.set_trace()
 #
 #
 #        # Print the entire result_klist dict
@@ -227,32 +240,32 @@ class TestC2CTraffic:
 #            info.logging("Background TCP bi-directional traffic testcase failed")
 #            assert 0
 
-    def test_c2c_dp_traffic_basic(self, common, dp_setup):
-        logging.info("inside testcase: test_c2c_dp_ping")
-        print("dp_setup setup_status is: %s" % dp_setup.setup_status)
-
-        # Run basic traffic test from first cloud gateway
-        #  in each tenant network
-        result_all = 1
-        for net in common.sdn:
-            cgw1 = net.edge_cloud_list[0]
-            cgw2 = net.edge_cloud_list[1]
-            # traffic_time=x
-            result = cgw1.traffic_run(cgw2.name, traffic_time=10)
-
-            if result == 1:
-                logging.info("Traffic passed for net %s" % net.topo['name'])
-            else:
-                logging.info("Traffic failed for net %s" % net.topo['name'])
-                result_all = 0 
-
-        pdb.set_trace()
-        if result_all == 1:
-            info.logging("Basic TCP bi-directional traffic testcase passed")
-            assert 1
-        else:
-            info.logging("Basic TCP bi-directional traffic testcase failed")
-            assert 0
+#    def test_c2c_dp_traffic_basic(self, common, dp_setup):
+#        logging.info("inside testcase: test_c2c_dp_ping")
+#        print("dp_setup setup_status is: %s" % dp_setup.setup_status)
+#
+#        # Run basic traffic test from first cloud gateway
+#        #  in each tenant network
+#        result_all = 1
+#        for net in common.sdn:
+#            cgw1 = net.edge_cloud_list[0]
+#            cgw2 = net.edge_cloud_list[1]
+#            # traffic_time=x
+#            result = cgw1.traffic_run(cgw2.name, traffic_time=10)
+#
+#            if result == 1:
+#                logging.info("Traffic passed for net %s" % net.topo['name'])
+#            else:
+#                logging.info("Traffic failed for net %s" % net.topo['name'])
+#                result_all = 0 
+#
+#        pdb.set_trace()
+#        if result_all == 1:
+#            info.logging("Basic TCP bi-directional traffic testcase passed")
+#            assert 1
+#        else:
+#            info.logging("Basic TCP bi-directional traffic testcase failed")
+#            assert 0
 
 
 

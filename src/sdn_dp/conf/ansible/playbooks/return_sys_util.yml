@@ -53,7 +53,7 @@
    - name: Pull interface stats
      shell: >
         sar -n DEV 1 1 |
-        grep -G 'bond0 ' |
+        grep -G 'bond0.50' |
         grep Average |
         awk '//{print "INT-RPS="$3" INT-TPS="$4" INT-RBS="$5" INT-TBS="$6}'
      register: int_util

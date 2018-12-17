@@ -1,0 +1,44 @@
+---
+ - name: Kill an iperf3 process via regex on port 
+   hosts: all
+   gather_facts: false
+   become: True
+
+   vars:
+     traffic_send_port: 5201
+     traffic_rev_port: 5202
+
+   tasks:
+   - name: store send iperf3 processes
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "ps -eaf | grep iperf3 | grep '{{ traffic_engine_int_ip }} \-p *{{ traffic_send_port }}'"
+     register: send_output
+     ignore_errors: yes
+
+   - debug: var=send_output
+
+   - name: store rev iperf3 processes
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "ps -eaf | grep iperf3 | grep '{{ traffic_engine_int_ip }} \-p *{{ traffic_rev_port }}'"
+     register: rev_output
+     ignore_errors: yes
+
+   - debug: var=rev_output
+
+   - set_fact: 
+       sendpidvalue: "{{ send_output.stdout | regex_replace('^[a-zA-Z0-9]+ +([0-9]+).*-B.*', '\\1') }}"
+     when: send_output is succeeded
+
+   - debug: var=sendpidvalue
+
+   - set_fact:
+       revpidvalue: "{{ rev_output.stdout | regex_replace('^[a-zA-Z0-9]+ +([0-9]+).*-B.*', '\\1') }}"
+     when: rev_output is succeeded
+
+   - debug: var=revpidvalue
+
+   - name: kill process for send pid value 
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "kill {{ sendpidvalue }}"
+     when: send_output is succeeded 
+
+   - name: kill process for rev pid value
+     shell: lxc exec {{ traffic_instance_name }} -- bash -c "kill {{ revpidvalue }}"
+     when: rev_output is succeeded
