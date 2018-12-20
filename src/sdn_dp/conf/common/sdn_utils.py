@@ -141,8 +141,7 @@ def traffic_run_handler(src_obj, dst_obj, **kwargs):
     # src vars below represent source traffic generator
     src_engine_ip = src_obj.topo['traffic_engine_ip']
     src_engine_gw = src_obj.topo['provider_ip']
-    src_dest_ip = str(re.search('([0-9.]+)/*[0-9]*', \
-         dst_obj.topo['traffic_engine_int_ip']).group(1))
+    src_dest_ip = dst_obj.topo['traffic_engine_int_ip'] 
     src_dest_gw = dst_obj.topo['provider_ip']
     dst_engine_ip = dst_obj.topo['traffic_engine_ip']
 
@@ -327,8 +326,7 @@ def traffic_start_handler(src_obj, dst_obj, **kwargs):
     # src vars below represent source traffic generator
     src_engine_ip = src_obj.topo['traffic_engine_ip']
     src_engine_gw = src_obj.topo['provider_ip']
-    src_dest_ip = str(re.search('([0-9.]+)/*[0-9]*', \
-         dst_obj.topo['traffic_engine_int_ip']).group(1))
+    src_dest_ip = dst_obj.topo['traffic_engine_int_ip']
     src_dest_gw = dst_obj.topo['provider_ip']
     dst_engine_ip = dst_obj.topo['traffic_engine_ip']
 

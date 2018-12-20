@@ -4,6 +4,7 @@ import subprocess
 import time
 import re
 from sdn_dp.conf.common.constants import CLOUDPROVINFO
+from sdn_dp.conf.common.constants import TRAFFICINFO
 
 
 def ansible_deploy_lxd_ospf(common, cloud_obj):
@@ -67,7 +68,7 @@ def ansible_deploy_lxd_bgp(common, cloud_obj):
                           (cloud_obj.topo['instance_name'], CLOUDPROVINFO.AWSDEFAULTBGPID, \
                            cloud_obj.topo['traffic_engine_int_ip'])
         ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
-                       --extra-vars "=%s"' % \
+                       --extra-vars "%s"' % \
                        (engine_ip, script, extra_vars)
 
         out = subprocess.check_output(ansible_cmd, shell=True)
@@ -75,6 +76,41 @@ def ansible_deploy_lxd_bgp(common, cloud_obj):
         return 1, out
     except:
         logging.error("Error: ansible_deploy_bgp_lxd: failed to provision properly")
+        pdb.set_trace()
+        return 0, {}
+
+def ansible_deploy_lxd_bgp_traffic(common, cloud_obj):
+    """
+    This function executes Ansible playbook for configure of BGP on cloud edge
+     container.
+    """
+
+    try:
+
+        lxd_inst_name = cloud_obj.topo['traffic_instance_name']
+        engine_ip = cloud_obj.topo['traffic_engine_ip'] 
+        edge_type = cloud_obj.topo['type']
+
+        if edge_type == "cloud":
+            script = 'lxd-bgp-traffic.yml'
+
+        elif edge_type == "site":
+            script = ''
+
+        extra_vars = "container_name=%s bgp_router_id=%s cloud_gw_ip=%s \
+                          bgp_asn_prov=%s bgp_asn_cloud=%s" % \
+                          (lxd_inst_name, cloud_obj.topo['traffic_engine_int_ip'], \
+                           cloud_obj.topo['provider_ip'], CLOUDPROVINFO.AWSDEFAULTBGPID, \
+                           CLOUDPROVINFO.PPDEFAULTBGPID)
+        ansible_cmd = 'ansible-playbook -i %s, "sdn_dp/conf/ansible/playbooks/%s" \
+                       --extra-vars "%s"' % \
+                       (engine_ip, script, extra_vars)
+
+        out = subprocess.check_output(ansible_cmd, shell=True)
+
+        return 1, out
+    except:
+        logging.error("Error: ansible_deploy_lxd_bgp_traffic: failed to provision properly")
         pdb.set_trace()
         return 0, {}
 
@@ -116,6 +152,7 @@ def ansible_traffic_subint(cloud_obj):
         net_match = re.search('cloud-([0-9]+)-', my_name)
         my_net_index = int(net_match.group(1)) - 1
         script = 'traffic_subint.yml'
+        ip_plus_mask = '%s/%s' % (gw.topo['traffic_engine_int_ip'], TRAFFICINFO.EXTERNAL_IP_MASK)
 
         for gw in cloud_obj.common.sdn[my_net_index].edge_list:
           if gw.topo['type'] == 'cloud':
@@ -126,7 +163,7 @@ def ansible_traffic_subint(cloud_obj):
                         script, \
                         gw.topo['traffic_engine_int'], \
                         gw.topo['segment_id'], \
-                        gw.topo['traffic_engine_int_ip'])
+                        ip_plus_mask)
             out = subprocess.check_output(ansible_cmd, shell=True)
              
           elif gw.topo['type'] == 'site':

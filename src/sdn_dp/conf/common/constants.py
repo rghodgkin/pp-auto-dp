@@ -60,8 +60,8 @@ class OSPRECONFIG(object):
     port_security = 'False'
 
 class OSCLOUDIMAGE(object):
-    netrouter = 'ubuntu-18.04-vpn'
-    cloud = 'ubuntu-18.04-vpn'
+    netrouter = 'ubuntu-18.04-ctr'
+    cloud = 'ubuntu-18.04-cgw'
     site = 'ubuntu-18.04-vpn'
     mobile = 'ubuntu-18.04-vpn'
     traffic = 'ubuntu-18.04-traffic'
@@ -75,6 +75,12 @@ class OSCLOUDFLAVOR(object):
 
 class CLOUDPROVINFO(object):
     AWSDEFAULTBGPID = 7224
+    PPDEFAULTBGPID = 394351 
+
+class CLOUDCONFIGTEMPS(object):
+    netrouter = 'create_cloud_config.j2'
+    cloud = 'create_cloud_config.j2'
+    site = 'create_cloud_config.j2'
 
 class TRAFFICINFO(object):
     # The below will configure external traffic gen ints with x.x.x.200/24

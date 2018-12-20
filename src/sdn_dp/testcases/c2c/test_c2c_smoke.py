@@ -36,6 +36,7 @@ class TestC2CTraffic:
 
     def test_traffic_bg(self, common, dp_setup):
         base = 1
+        pdb.set_trace()
         for cnt in range(0, base):
             net = common.sdn[cnt]
             cgw1 = net.edge_cloud_list[0]

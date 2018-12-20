@@ -1,5 +1,5 @@
 ---
- - name: Configure BGP for LXD netrouter/controller
+ - name: Configure BGP for LXD traffic container 
    hosts: all
    gather_facts: false
 
@@ -14,19 +14,18 @@
      blockinfile:
         path: /var/lib/lxd/containers/{{ container_name }}/rootfs/etc/frr/frr.conf
         block: |
-            router bgp 65000
+            router bgp {{ bgp_asn_prov }}
               bgp router-id {{ bgp_router_id }} 
               no bgp default ipv4-unicast
               bgp default show-hostname
-              neighbor rrclients peer-group
-              neighbor rrclients remote-as 65000
-              neighbor rrclients advertisement-interval 1
-              bgp listen range {{ tenant_net_range }} peer-group rrclients
+              neighbor {{ cloud_gw_ip }} remote-as {{ bgp_asn_cloud }}
               !
               address-family ipv4 unicast
-                neighbor rrclients activate
-                neighbor rrclients route-reflector-client
-                neighbor rrclients soft-reconfiguration inbound
+                network {{ bgp_router_id }}/32
+                neighbor {{ cloud_gw_ip }} activate
+                neighbor {{ cloud_gw_ip }} soft-reconfiguration inbound
+                neighbor {{ cloud_gw_ip }} allowas-in
+                neighbor {{ cloud_gw_ip }} password somekindofpassword
               exit-address-family
         insertafter: '^username*'
      become: yes
