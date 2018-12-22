@@ -342,11 +342,99 @@ class SdnEdgeCloudObj(SdnEdgeParent):
 
 class SdnEdgeSiteCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common, net_obj):
-        SdnEdgeParent.__init__(self, topo_dict, common, net_obj) 
+        SdnEdgeParent.__init__(self, topo_dict, common, net_obj)
+        # Initialize cloud specific Openstack dict keys
+        self.os['networks']['provider'] = {'net_obj':{}, 'port_obj':{}}
 
     def deploy(self):
-        pass
+        if self.deploy_state == 0:
 
+            nova = self.common.os['clients']['nova']['client']
+
+            image = nova.glance.find_image('%s' % OSCLOUDIMAGE.site)
+            flavor_name = OSCLOUDFLAVOR.site
+            flavor = nova.flavors.find(name=flavor_name)
+            net_tenant = self.os['networks']['tenant']['net_obj']['network']['id']
+            net_provider = self.os['networks']['provider']['net_obj']['network']['id']
+            nics = [{'net-id': net_tenant, 'name': '%s-tenant-port' % self.name},
+                    {'net-id': net_provider, 'name': '%s-provider-port' % self.name}]
+            # For now we are going to leverage Dave's 'create_cloud_config.py' file as
+            #  intermediate.   It will be placed into the '/src/sdn_dp/conf/common/templates'
+            #   directory as 'create_cloud_config.j2'.  This file needs to be updated
+            #   for following jinja substitutions:
+            #       controller_ip_1 = Controller IP address of first RR
+            #       controller_ip_2 = Controller IP address of second RR
+            #       cloud_prov_ip = AWS/Google cloud provider ip
+            #       cloud_prov_asn = AWS/Goodle ASN number
+            #
+
+            j2_env = jinja2.Environment(loader=jinja2.FileSystemLoader('sdn_dp/conf/common/templates/'))
+            template = j2_env.get_template(CLOUDCONFIGTEMPS.site)
+            # Find netrouter/controller IP addresses assigned
+            controller_ip = {1:'', 2:''}
+            for nr_index in range(len(self.network.edge_netrouter_list)):
+                controller_ip[nr_index + 1] = str(self.network.edge_netrouter_list[nr_index].topo['tenant_ip'])
+            # All edge container devices will be auto configured to x.x.x.200/24
+            traf_gen_ip = self.topo['traffic_engine_int_ip']
+            # Create render keyed-list for jinja overlay
+            render_klist = {'controller_ip_1':controller_ip[1], 'controller_ip_2':controller_ip[2], \
+                            'cloud_prov_ip':traf_gen_ip, 'cloud_prov_asn':CLOUDPROVINFO.AWSDEFAULTBGPID, \
+                            'vpn_router_ip':self.topo['traffic_engine_int_ip']}
+            file_render = template.render(render_klist)
+            outfile = 'sdn_dp/conf/common/templates/' + CLOUDCONFIGTEMPS.cloud.rsplit('.', 1)[0] + '.py'
+            outfile_name = CLOUDCONFIGTEMPS.cloud.rsplit('.', 1)[0] + '.py'
+            with open(outfile, 'w') as fp:
+                fp.write(file_render)
+            os.chmod(outfile, 0700)
+            subprocess.check_output('./%s' % outfile_name, cwd='sdn_dp/conf/common/templates/', shell=True)
+            with open('sdn_dp/conf/common/templates/cloud-config.yml', 'r') as fp:
+                userdata = fp.read()
+
+            # Openstack has some inconsistency where the instance ID does not always
+            #   get populated in the object.  If not present kill and respawn
+            for respawn in range(5):
+                instance = nova.servers.create(name=self.name, image=image, \
+                                           flavor=flavor, nics=nics, \
+                                           availability_zone=self.topo['engine'], \
+                                           userdata=userdata)
+                time.sleep(1)
+                dir(instance)
+                if instance._info['OS-EXT-SRV-ATTR:instance_name'] != '':
+                    break
+                else:
+                    instance.delete()
+                    time.sleep(5)
+
+            self.os['server']['server_obj'] = instance
+            self.topo['instance_name'] = instance._info['OS-EXT-SRV-ATTR:instance_name']
+            for loop in range(10):
+                time.sleep(2)
+                print("Loop cntr =: %s" % loop)
+                instance_net_info = instance.interface_list()
+                if len(instance_net_info) == 2:
+                    break
+
+            # The below ensures to grab correct interface IP for tenant vs provider,
+            #  Openstack is not always consistent
+            tenant_regex = re.search('([0-9]+\.[0-9]+)\.', SDNCIDR.OS_TENANT_IP_START).group(1)
+            for cntr in range(2):
+                ip_tmp = instance_net_info[cntr].fixed_ips[0]['ip_address']
+                if re.search(tenant_regex, ip_tmp):
+                    self.topo['tenant_ip'] = ip_tmp
+                    self.topo['tenant_mac'] = instance_net_info[cntr].mac_addr
+                else:
+                    self.topo['provider_ip'] = ip_tmp
+                    self.topo['provider_mac'] = instance_net_info[cntr].mac_addr
+
+
+            self.deploy_state = 1
+
+            return 1
+
+        else:
+            logging.info("SdnNetrouterCloudObj: deploy of %s failed b/c \
+                          already in deployed state" % selfname)
+            return 0
 
 class SdnEdgeMobileCloudObj(SdnEdgeParent):
     def __init__(self, topo_dict, common, net_obj):

@@ -12,6 +12,7 @@ from neutronclient.neutron import client as neuclient
 import sdn_dp.conf.os.os_lib as os_lib
 from sdn_dp.conf.common.constants import OSPRECONFIG 
 from sdn_dp.conf.common.constants import OSBRIDGEMAPPING
+from sdn_dp.conf.common.constants import OSSITEINFO
 import pdb
 
 
@@ -202,6 +203,14 @@ def config_os_provider_networks(self):
                 else:
                     logging.error("config_os_provider_networks: Failed to provision \
                                    OS subnet for network: %s" % net_name)
+
+            os_vpn_net = OSSITEINFO.OS_NET_NAME
+            out = neutron.list_networks(name=os_vpn_net)
+            site_list = net.edge_site_list
+            for s_item in site_list:
+                s_item.os['networks']['provider']['net_obj'] = {}
+                s_item.os['networks']['provider']['net_obj']['network'] = out['networks'][0] 
+
         return 1, {}
 
     except:

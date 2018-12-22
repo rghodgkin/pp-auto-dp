@@ -5,8 +5,8 @@
 import json
 import yaml
 
-isVpn = False
-#isVpn = True
+#isVpn = False
+isVpn = True
 vpn_psk = {
         "ipsec": {
             #"ikeVersion": "1",
@@ -37,7 +37,7 @@ vpn_psk = {
                 ]
             },
         "nat": {
-            "enabled": True,
+            "enabled": False,
             "sourceAddresses": [
                 "100.101.0.1",
                 "100.101.0.2"
@@ -57,7 +57,7 @@ vpn_psk = {
                     }
                 ]
             },
-        "controllerIp": "198.18.0.3"
+        "controllerIp": "{{ controller_ip_1 }}"
         }
 
 

@@ -1,3 +1,0 @@
-[all]
-engine2 ansible_host=10.8.1.2 
-instance-0000039c ansible_connection=lxd ansible_host=engine2:instance-0000039c

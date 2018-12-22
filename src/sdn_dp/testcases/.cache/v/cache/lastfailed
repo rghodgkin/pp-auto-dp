@@ -1,1 +1,3 @@
-{}
+{
+  "c2c/test_c2c_smoke.py::TestC2CTraffic::()::test_traffic_bg": true
+}

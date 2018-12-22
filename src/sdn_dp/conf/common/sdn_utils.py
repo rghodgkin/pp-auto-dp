@@ -13,6 +13,7 @@ from sdn_dp.conf.common.constants import SDNVLAN
 from sdn_dp.conf.common.constants import SDNCIDR
 from sdn_dp.conf.common.constants import OSBRIDGEMAPPING
 from sdn_dp.conf.common.constants import TRAFFICINFO
+from sdn_dp.conf.common.constants import OSSITEINFO
 
 
 def gen_sdn_topo(tv, common):
@@ -33,6 +34,12 @@ def gen_sdn_topo(tv, common):
                      skip_zero=True)
       goog_sub_list = utils.return_ip_subnets(goog_ip_start, goog_prefix, \
                       skip_zero=True)
+      # VPN sites for a pod will all be placed into the same flat vlan
+      #  for outside reachability.  We will go ahead and assign the traffic_gen
+      #  side IP to each gateway and later the container will be attached.
+      vpn_sub_ip_list = utils.return_ip_subnets(OSSITEINFO.OS_NET_CIDR, 32, skip_zero=True)
+      vpn_sub_ip_list.reverse()
+      vpn_sub_ip_list = vpn_sub_ip_list[:len(vpn_sub_ip_list)-5]
 
       # Configure SDN related data
       sdn_name = tv['sdn']['name']
@@ -97,9 +104,6 @@ def gen_sdn_topo(tv, common):
                   edge_kl['tenant_net'] = tenant_cidr
                   edge_kl['provider_net_name'] = "%s-provider" % edge_kl['name']
                   edge_kl['provider_ip'] = ""
-                  #edge_kl['provider_ip'] =  utils.return_ip_subnets(edge_kl['provider_net'], \
-                  #        32, skip_zero=True).pop() 
-
     
                   # Add edge_kl to net_kl['edge_list']
                   net_kl['edge_list'].append(edge_kl)
@@ -116,7 +120,13 @@ def gen_sdn_topo(tv, common):
                   edge_kl['tenant_net_name'] = "%s-network-%s-tenant" % (sdn_name, net_cntr)
                   edge_kl['tenant_ip'] = ""
                   edge_kl['tenant_net'] = tenant_cidr
-                  edge_kl['vpn_net'] = ""
+                  edge_kl['provider_net'] = OSSITEINFO.OS_NET_CIDR 
+                  edge_kl['provider_net_name'] = OSSITEINFO.OS_NET_NAME
+                  edge_kl['provider_ip'] = ""
+                  #edge_kl['provider_ip'] =  utils.return_ip_subnets(edge_kl['provider_net'], \
+                  #        32, skip_zero=True).pop()
+                  edge_kl['traffic_engine_int_ip'] = re.search("([0-9.]+)/[0-9]+", \
+                                                     vpn_sub_ip_list.pop()).group(1)
 
                   # Add edge_kl to net_kl['edge_list']
                   net_kl['edge_list'].append(edge_kl)

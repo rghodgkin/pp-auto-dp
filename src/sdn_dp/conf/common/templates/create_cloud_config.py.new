@@ -5,17 +5,19 @@
 import json
 import yaml
 
-isVpn = False
-#isVpn = True
+#isVpn = False
+isVpn = True
 vpn_psk = {
         "ipsec": {
-            #"ikeVersion": "1",
-            "ikeVersion": "2",
+            "ikeVersion": "1",
+            #"ikeVersion": "2",
             "authType": "psk",
-            "vpnRouterIp": "{{ cloud_prov_ip }}",
+            "vpnRouterIp": "10.198.1.250",
             "ike": {
-                "encryption": "aes128gcm16",
-                "prf": "prfsha256",
+                #"encryption": "aes128gcm16",
+                "encryption": "aes128",
+                #"prf": "prfsha256",
+                "integrity": "sha256",
                 "dhGroup": "ecp256"
                 },
             "esp": {
@@ -28,53 +30,51 @@ vpn_psk = {
             "trafficSelectors": [
                 {
                     "local": "10.6.6.0/24",
-                    "remote": "172.16.1.0/24",
+                    #"remote": "172.16.1.0/24",
+                    "remote": "100.100.1.0/24", # if cloud is NATting
                     },
                 {
                     "local": "10.6.5.0/24",
-                    "remote": "172.16.1.0/24",
+                    #"remote": "172.16.1.0/24",
+                    "remote": "100.100.16.0/24", # if cloud is NATting
                     }
                 ]
             },
         "nat": {
-            "enabled": True,
-            "sourceAddresses": [
-                "100.101.0.1",
-                "100.101.0.2"
-                ],
+            "enabled": False,
+            "pnatCidr": "100.101.0.0/29",
             "blocks": [
-                "100.101.1.0/20",
-                "100.101.2.0/20"
+                "100.101.0.0/20",
+                "100.101.16.0/20"
                 ],
             "mappings": [
                 {
-                    "nativeCidr": "10.6.6.2/32",
-                    "natCidr": "100.101.1.2/32"
+                    "nativeCidr": "10.6.6.14/32",
+                    "natCidr": "100.101.1.14/32"
                     },
                 {
                     "nativeCidr": "10.6.5.0/24",
-                    "natCidr": "100.101.2.0/24"
+                    "natCidr": "100.101.16.0/24"
                     }
                 ]
             },
-        "controllerIp": "198.18.0.3"
+        "controllerIps": [
+                "198.18.1.7"
+                ]
         }
 
 
 aws_cloud = {
         "nat": {
             "enabled": False,
-            "sourceAddresses": [
-                "100.100.1.1",
-                "100.100.1.2"
-                ],
+            "pnatCidr": "100.100.1.0/29",
             "blocks": [
-                "100.100.1.0/20",
-                "100.100.5.0/20"
+                "100.100.0.0/20",
+                "100.100.16.0/20"
                 ],
             "mappings": [
                 {
-                    "nativeCidr": "172.16.1.10/32",
+                    "nativeCidr": "172.16.1.1/32",
                     "natCidr": "100.100.1.10/32"
                     },
                 {
@@ -83,11 +83,14 @@ aws_cloud = {
                     }
                 ]
             },
-        "controllerIp": "{{ controller_ip_1 }}",
+        "controllerIps": [
+            "198.18.1.7",
+            ""
+            ],
         "ppAsn": "394351",
         "cloudGw": {
-            "ip": "{{ cloud_prov_ip }}",
-            "asn": "{{ cloud_prov_asn }}",
+            "ip": "10.198.1.250",
+            "asn": "7224",
             "bgpPasswd": "somekindofpassword"
             }
         }

@@ -3,6 +3,14 @@ sdn:
   network:
     count: 1
     edge_list:
+      - type: netrouter 
+        count: 1
+        engine:
+        - e1
+      - type: site
+        count: 1
+        engine:
+        - e1
       - type: cloud
         cloud_provider: aws
         count: 1
@@ -15,4 +23,4 @@ sdn:
         - e2
   other:
     traffic: os
-    traffic_routes: ospf 
+    traffic_routes: bgp

@@ -43,7 +43,11 @@ class SDNCIDR(object):
     GOOGLE_PROVIDER_PREFIX = 24
 
 class OSBRIDGEMAPPING(object):
-    OS_PHYSICAL_NET = 'vlan'
+    OS_PHYSICAL_NET = 'us-ral-1a-vlan'
+
+class OSSITEINFO(object):
+    OS_NET_NAME = 'us-ral-1a-public-1'
+    OS_NET_CIDR = '10.198.1.0/24'
            
 class OSPRECONFIG(object):
     images = [
@@ -60,16 +64,16 @@ class OSPRECONFIG(object):
     port_security = 'False'
 
 class OSCLOUDIMAGE(object):
-    netrouter = 'ubuntu-18.04-ctr'
-    cloud = 'ubuntu-18.04-cgw'
-    site = 'ubuntu-18.04-vpn'
+    netrouter = 'controller'
+    cloud = 'cloud_gateway'
+    site = 'vpn_site_gateway'
     mobile = 'ubuntu-18.04-vpn'
-    traffic = 'ubuntu-18.04-traffic'
+    traffic = 'traffic'
 
 class OSCLOUDFLAVOR(object):
-    netrouter = 'c1.small'
-    cloud = 'c1.small'
-    site = 'c1.small'
+    netrouter = 'm1.tiny'
+    cloud = 'm1.tiny'
+    site = 'm1.tiny'
     mobile = 'c1.small'
     traffic = 'c1.small'
 
@@ -80,7 +84,7 @@ class CLOUDPROVINFO(object):
 class CLOUDCONFIGTEMPS(object):
     netrouter = 'create_cloud_config.j2'
     cloud = 'create_cloud_config.j2'
-    site = 'create_cloud_config.j2'
+    site = 'create_cloud_config_vpn.j2'
 
 class TRAFFICINFO(object):
     # The below will configure external traffic gen ints with x.x.x.200/24

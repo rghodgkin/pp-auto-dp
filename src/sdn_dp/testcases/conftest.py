@@ -47,14 +47,14 @@ def dp_setup(common):
     for net in common.sdn:
         for nrtr in net.edge_netrouter_list:
             nrtr.deploy()
-        for cgw in net.edge_cloud_list:
-            cgw.deploy()
         for sgw in net.edge_site_list:
             sgw.deploy()
+        for cgw in net.edge_cloud_list:
+            cgw.deploy()
         for mgw in net.edge_mobile_list:
             mgw.deploy()
 
-    logging.info("Sleeping 10 seconds after deploy to let all containers \
+    logging.info("Sleeping 20 seconds after deploy to let all containers \
                   get to active state")
     time.sleep(20)
 
@@ -94,17 +94,23 @@ def dp_setup(common):
       flavor_name = OSCLOUDFLAVOR.traffic
       flavor = nova.flavors.find(name=flavor_name)
       for net in common.sdn:
-          for edge_item in net.edge_cloud_list:
+          for edge_item in net.edge_list:
             c_type = edge_item.topo['type']
             c_name = '%s-traffic' % edge_item.topo['name']
 
-            if c_type == 'cloud':
-              c_prov = edge_item.topo['cloud_provider']
-              # All cloud edge containes will be given IP address x.x.x.200/24 
-              net_provider = edge_item.os['networks']['provider']['net_obj']['network']['id']
-              host_ip_list = utils.return_ip_subnets(edge_item.topo['provider_net'], 32, skip_zero=True)
-              regex_match = re.search("([0-9.]+)/[0-9]+", host_ip_list[255 - int(TRAFFICINFO.EXTERNAL_IP)])
-              traf_gen_ip = '%s' % regex_match.group(1)
+            if c_type == 'cloud' or c_type == 'site':
+              if c_type == 'cloud':
+                c_prov = edge_item.topo['cloud_provider']
+                # All cloud edge containers will be given IP address x.x.x.200/24 
+                net_provider = edge_item.os['networks']['provider']['net_obj']['network']['id']
+                host_ip_list = utils.return_ip_subnets(edge_item.topo['provider_net'], 32, skip_zero=True)
+                regex_match = re.search("([0-9.]+)/[0-9]+", host_ip_list[255 - int(TRAFFICINFO.EXTERNAL_IP)])
+                traf_gen_ip = '%s' % regex_match.group(1)
+              elif c_type == 'site':
+                c_prov = 'vpn'
+                net_provider = edge_item.os['networks']['provider']['net_obj']['network']['id']
+                traf_gen_ip = edge_item.topo['traffic_engine_int_ip']
+  
               nics = [{'net-id': net_provider, 'name': '%s-traffic-port' % edge_item.name, \
                        'v4-fixed-ip': traf_gen_ip}] 
               edge_item.topo['traffic_mode'] = \
@@ -115,7 +121,7 @@ def dp_setup(common):
                         traffic_kl[c_prov]['engine_ip']
               edge_item.topo['traffic_name'] = c_name
               edge_item.topo['traffic_routes'] = common.topo['other']['traffic_routes']
-  
+    
               for respawn in range(5):
                 # 'v4-fixed-ip': '168.0.1.200'
                 instance = nova.servers.create(name=c_name, image=image, \
@@ -128,7 +134,7 @@ def dp_setup(common):
                 else:
                     instance.delete()
                     time.sleep(5)
-
+  
               edge_item.os['server']['traffic_obj'] = instance
               edge_item.topo['traffic_instance_name'] = instance._info['OS-EXT-SRV-ATTR:instance_name']
               instance_net_info = instance.interface_list()

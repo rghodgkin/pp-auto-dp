@@ -12,7 +12,7 @@ vpn_psk = {
             #"ikeVersion": "1",
             "ikeVersion": "2",
             "authType": "psk",
-            "vpnRouterIp": "{{ cloud_prov_ip }}",
+            "vpnRouterIp": "169.0.1.200",
             "ike": {
                 "encryption": "aes128gcm16",
                 "prf": "prfsha256",
@@ -83,11 +83,11 @@ aws_cloud = {
                     }
                 ]
             },
-        "controllerIp": "{{ controller_ip_1 }}",
+        "controllerIp": "198.18.1.9",
         "ppAsn": "394351",
         "cloudGw": {
-            "ip": "{{ cloud_prov_ip }}",
-            "asn": "{{ cloud_prov_asn }}",
+            "ip": "169.0.1.200",
+            "asn": "7224",
             "bgpPasswd": "somekindofpassword"
             }
         }

@@ -1,0 +1,17 @@
+#cloud-config
+write_files:
+- content: |
+    eyJuYXQiOiB7ImVuYWJsZWQiOiBmYWxzZSwgInNvdXJjZUFkZHJlc3NlcyI6IFsiMTAwLjEwMC4x
+    LjEiLCAiMTAwLjEwMC4xLjIiXSwgImJsb2NrcyI6IFsiMTAwLjEwMC4xLjAvMjAiLCAiMTAwLjEw
+    MC41LjAvMjAiXSwgIm1hcHBpbmdzIjogW3sibmF0aXZlQ2lkciI6ICIxNzIuMTYuMS4xMC8zMiIs
+    ICJuYXRDaWRyIjogIjEwMC4xMDAuMS4xMC8zMiJ9LCB7Im5hdGl2ZUNpZHIiOiAiMTcyLjE2LjEu
+    MC8yNCIsICJuYXRDaWRyIjogIjEwMC4xMDAuMS4wLzI0In1dfSwgImNvbnRyb2xsZXJJcCI6ICIx
+    OTguMTguMS45IiwgInBwQXNuIjogIjM5NDM1MSIsICJjbG91ZEd3IjogeyJpcCI6ICIxNjkuMC4x
+    LjIwMCIsICJhc24iOiAiNzIyNCIsICJiZ3BQYXNzd2QiOiAic29tZWtpbmRvZnBhc3N3b3JkIn19
+  encoding: b64
+  owner: root:root
+  path: /tmp/katodata.json
+  permission: '0644'
+runcmd:
+- [cloud-init-per, once, configure-net, /usr/local/bin/configure]
+
